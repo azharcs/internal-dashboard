@@ -18,6 +18,18 @@ const NAV = [
 
 function Sidebar({ route, setRoute, expandedServices, setExpandedServices }) {
   const isOn = (id) => route.id === id || (id === 'services' && route.id?.startsWith('svc-'));
+  const access = window.ACCESS || { can: () => true, canAccess: () => true, isAdmin: () => true, user: { name: 'Sushant V.', initials: 'SV' }, role: { label: 'Admin' } };
+  const user = access.user;
+  const role = access.role;
+
+  // Filter nav items by access
+  const visibleNav = NAV.filter(item => {
+    if (item.id === 'candidates') return access.can('canViewCandidates');
+    if (item.id === 'dropoffs')   return access.can('canViewDropoffs');
+    if (item.id === 'offers')     return access.can('canViewOffers');
+    if (item.id === 'settings')   return access.can('canViewSettings');
+    return true;
+  });
 
   return (
     <aside className="rail">
@@ -31,7 +43,7 @@ function Sidebar({ route, setRoute, expandedServices, setExpandedServices }) {
 
       <div className="rail-section">Workspace</div>
       <nav className="rail-nav">
-        {NAV.map(item => (
+        {visibleNav.map(item => (
           <React.Fragment key={item.id}>
             <button
               className={`rail-link ${isOn(item.id) ? 'is-on' : ''} ${item.children ? 'has-children' : ''} ${item.children && expandedServices ? 'is-expanded' : ''}`}
@@ -50,7 +62,7 @@ function Sidebar({ route, setRoute, expandedServices, setExpandedServices }) {
             </button>
             {item.children && expandedServices && (
               <div className="rail-sub">
-                {item.children.map(c => (
+                {item.children.filter(c => access.canAccess(c.code)).map(c => (
                   <button
                     key={c.id}
                     className={`rail-link ${route.id === c.id ? 'is-on' : ''}`}
@@ -67,10 +79,10 @@ function Sidebar({ route, setRoute, expandedServices, setExpandedServices }) {
       </nav>
 
       <div className="rail-foot">
-        <div className="rail-foot-avatar">SV</div>
+        <div className="rail-foot-avatar">{user.initials}</div>
         <div className="rail-foot-meta">
-          <div className="n">Sushant V.</div>
-          <div className="r">Service Ops · Lead</div>
+          <div className="n">{user.name}</div>
+          <div className="r">{role.label}</div>
         </div>
         <div className="rail-foot-icon" title="Help"><window.Icon name="help" size={14} /></div>
       </div>

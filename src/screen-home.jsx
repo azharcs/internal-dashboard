@@ -2,6 +2,9 @@
    4 KPI tiles, Today's queue (RR), RC schedule, Drop-off alerts, Live offers. */
 
 function HomeScreen({ setRoute, openCandidate }) {
+  const access = window.ACCESS || { isRestricted: () => false, can: () => true, user: { name: 'Sushant V.' }, filterOrders: o => o };
+  if (access.isRestricted()) return <PersonalizedHome access={access} setRoute={setRoute} openCandidate={openCandidate} />;
+
   const today = new Date();
   const todayStr = today.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -251,6 +254,137 @@ function callTone(s) {
     'Completed': 'grey',
     'Report pending': 'amber',
   })[s] || 'grey';
+}
+
+function PersonalizedHome({ access, setRoute, openCandidate }) {
+  const user = access.user;
+  const role = access.role;
+  const today = new Date();
+  const todayStr = today.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+  const firstName = user.name.split(' ')[0];
+
+  // My assigned RR orders
+  const myRR = access.canAccess('RR')
+    ? (window.RR_ORDERS_FULL || []).filter(o => o.writer === user.name || o.reviewer === user.name).filter(o => !['Closed','Cancelled'].includes(o.state))
+    : [];
+
+  // My assigned MRR orders
+  const myMRR = access.canAccess('MRR')
+    ? (window.MRR_ORDERS || []).filter(o => o.writer === user.name).filter(o => !['Delivered','Cancelled'].includes(o.state))
+    : [];
+
+  // My RC orders
+  const myRC = access.canAccess('RC')
+    ? (window.RC_ORDERS_FULL || []).filter(o => o.recruiter === user.name).filter(o => !['Closed','Cancelled'].includes(o.state))
+    : [];
+
+  const totalOpen = myRR.length + myMRR.length + myRC.length;
+  const urgent = myRR.filter(o => o.slaRemainingMin < 4 * 60).length;
+
+  return (
+    <div className="page">
+      <PageHead
+        title={`Good morning, ${firstName}`}
+        sub={`Today is ${todayStr}. Here are your assigned orders.`}
+        actions={<>
+          <span style={{ fontSize: 12, padding: '4px 10px', borderRadius: 4, background: role.bg, color: role.color, fontWeight: 600 }}>{role.label}</span>
+        </>}
+      />
+
+      {/* Personal KPI row */}
+      <div className="kpi-row" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
+        <KpiTile label="My open orders" value={totalOpen} sub="assigned to me" spark={[2,3,2,4,3,5,4,6,5,7,6,totalOpen]} />
+        {myRR.length > 0 && <KpiTile label="RR — urgent" value={urgent} sub="SLA < 4h" color="var(--amber-strong)" warn={urgent > 0} spark={[0,1,0,2,1,3,2,1,2,urgent,urgent,urgent]} />}
+        {myMRR.length > 0 && <KpiTile label="MRR — in rewrite" value={myMRR.filter(o => o.state === 'In Rewrite').length} sub="active rewrites" color="var(--violet-strong)" spark={[1,1,2,1,2,2,3,2,3,3,2,myMRR.filter(o=>o.state==='In Rewrite').length]} />}
+        {myRC.length > 0  && <KpiTile label="RC — upcoming" value={myRC.filter(o => o.state === 'Scheduled').length} sub="calls scheduled" color="var(--green-strong)" spark={[1,2,1,3,2,3,2,4,3,4,3,myRC.filter(o=>o.state==='Scheduled').length]} />}
+        {myRR.length === 0 && myMRR.length === 0 && myRC.length === 0 && <KpiTile label="All caught up" value={0} sub="no open orders" color="var(--green-strong)" spark={[0,0,0,0,0,0,0,0,0,0,0,0]} />}
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginTop: 24 }}>
+        {/* My RR queue */}
+        {myRR.length > 0 && (
+          <div className="card">
+            <div className="card-head">
+              <div><h3 className="card-title">My Resume Report orders <span className="count">{myRR.length}</span></h3><p className="card-sub">Sorted by SLA urgency.</p></div>
+              <button className="btn btn-ghost btn-sm" onClick={() => setRoute({ id: 'svc-rr', code: 'RR' })}>View all <window.Icon name="chevron-right" size={12} /></button>
+            </div>
+            <table className="tbl">
+              <thead><tr><th>Order</th><th>Candidate</th><th>Status</th><th>Role</th><th>SLA</th><th>Score</th></tr></thead>
+              <tbody>
+                {myRR.slice(0,6).map(o => (
+                  <tr key={o.id} style={{ cursor: 'pointer' }} onClick={() => openCandidate && openCandidate(o.candidate.id)}>
+                    <td className="tnum text-muted">{o.id}</td>
+                    <td><div className="av-row"><Avatar initials={o.candidate.avatarInitials} /><div><div className="n">{o.candidate.name}</div><div className="e">{o.candidate.email}</div></div></div></td>
+                    <td><Pill tone={window.rrStateTone(o.state)} dot>{o.state}</Pill></td>
+                    <td className="text-xs text-muted">{o.writer === user.name ? 'Writer' : 'Reviewer'}</td>
+                    <td><SlaBadge minutesLeft={o.slaRemainingMin} /></td>
+                    <td><ScoreBadge value={o.score} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* My MRR queue */}
+        {myMRR.length > 0 && (
+          <div className="card">
+            <div className="card-head">
+              <div><h3 className="card-title">My Manual Resume Rewrite orders <span className="count">{myMRR.length}</span></h3><p className="card-sub">Assigned to me.</p></div>
+              <button className="btn btn-ghost btn-sm" onClick={() => setRoute({ id: 'svc-mrr', code: 'MRR' })}>View all <window.Icon name="chevron-right" size={12} /></button>
+            </div>
+            <table className="tbl">
+              <thead><tr><th>Order</th><th>Candidate</th><th>Plan</th><th>Status</th><th>Score before</th><th>Score after</th></tr></thead>
+              <tbody>
+                {myMRR.slice(0,6).map(o => (
+                  <tr key={o.id} style={{ cursor: 'pointer' }}>
+                    <td className="tnum text-muted">{o.id}</td>
+                    <td><div className="av-row"><Avatar initials={o.candidate.avatarInitials} /><div><div className="n">{o.candidate.name}</div><div className="e">{o.candidate.email}</div></div></div></td>
+                    <td><span style={{ fontSize: 11, fontWeight: 600, color: o.plan.key === 'package' ? 'var(--violet-strong)' : 'var(--primary-800)', background: o.plan.key === 'package' ? 'var(--violet-soft)' : 'var(--primary-50)', padding: '2px 7px', borderRadius: 4 }}>{o.plan.label}</span></td>
+                    <td><Pill tone={window.mrrStateTone(o.state)} dot>{o.state}</Pill></td>
+                    <td><ScoreBadge value={o.originalScore} /></td>
+                    <td>{o.rewrittenScore ? <ScoreBadge value={o.rewrittenScore} /> : <span className="text-xs text-muted">—</span>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* My RC queue */}
+        {myRC.length > 0 && (
+          <div className="card">
+            <div className="card-head">
+              <div><h3 className="card-title">My Recruiter Connect orders <span className="count">{myRC.length}</span></h3><p className="card-sub">Assigned to me.</p></div>
+              <button className="btn btn-ghost btn-sm" onClick={() => setRoute({ id: 'svc-rc', code: 'RC' })}>View all <window.Icon name="chevron-right" size={12} /></button>
+            </div>
+            <table className="tbl">
+              <thead><tr><th>Order</th><th>Candidate</th><th>Status</th><th>Call slot</th><th>Score</th></tr></thead>
+              <tbody>
+                {myRC.slice(0,6).map(o => (
+                  <tr key={o.id} style={{ cursor: 'pointer' }}>
+                    <td className="tnum text-muted">{o.id}</td>
+                    <td><div className="av-row"><Avatar initials={o.candidate.avatarInitials} /><div><div className="n">{o.candidate.name}</div><div className="e">{o.candidate.email}</div></div></div></td>
+                    <td><Pill tone={window.rcStateTone(o.state)} dot>{o.state}</Pill></td>
+                    <td className="text-sm text-muted">{o.slot ? fmtDateTime(o.slot) : '—'}</td>
+                    <td><ScoreBadge value={o.score} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {totalOpen === 0 && (
+          <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--fg-3)' }}>
+            <window.Icon name="check" size={32} style={{ stroke: 'var(--green-strong)', marginBottom: 12 }} />
+            <div className="font-semi" style={{ fontSize: 16 }}>All caught up!</div>
+            <div className="text-sm text-muted">No orders assigned to you right now.</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 window.HomeScreen = HomeScreen;

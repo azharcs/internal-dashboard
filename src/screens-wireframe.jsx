@@ -428,40 +428,50 @@ function AuditScreen() {
 
 // === Settings ========================================================
 function SettingsScreen() {
-  const sections = [
-    { t: 'Workspace', i: 'briefcase', items: ['Workspace name','Time zone','Currency display','Date format'] },
-    { t: 'Services',  i: 'tag',       items: ['Resume Report pricing','Resume Builder paywall','Interview IQ free → paid threshold','RC pricing'] },
-    { t: 'SLA & defaults', i: 'clock', items: ['RR SLA window','RC scheduling window','Drop-off severity rules'] },
-    { t: 'Team',      i: 'users',     items: ['Members','Display names','Avatars'] },
-    { t: 'Integrations', i: 'external', items: ['Payment gateway','Slack notifications (read-only digest)','Webhooks'] },
+  const [tab, setTab] = React.useState('team');
+  const tabs = [
+    { id: 'team',         label: 'Team & Access',   icon: 'users' },
+    { id: 'workspace',    label: 'Workspace',        icon: 'briefcase' },
+    { id: 'services',     label: 'Services',         icon: 'tag' },
+    { id: 'sla',          label: 'SLA & Defaults',   icon: 'clock' },
+    { id: 'integrations', label: 'Integrations',     icon: 'external' },
   ];
+  const wireframeSections = {
+    workspace:    { items: ['Workspace name','Time zone','Currency display','Date format'] },
+    services:     { items: ['Resume Report pricing','Resume Builder paywall','Interview IQ free → paid threshold','RC pricing','MRR base pricing'] },
+    sla:          { items: ['RR SLA window','RC scheduling window','Drop-off severity rules','MRR turnaround target'] },
+    integrations: { items: ['Payment gateway','Slack notifications (read-only digest)','Webhooks','Score calculation API'] },
+  };
+
   return (
     <div className="page">
       <PageHead title="Settings" />
-      <WireBanner>Wireframe — settings surfaces. No role / permission UI: every team member has full access (per operating principle 1).</WireBanner>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 16 }}>
-        {sections.map((s, i) => (
-          <div key={i} className="card card-pad">
-            <div className="flex items-center gap-3 mb-3">
-              <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--primary-50)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                <window.Icon name={s.i} size={18} style={{ stroke: 'var(--primary)' }} />
-              </div>
-              <div>
-                <div className="font-semi" style={{ fontSize: 15 }}>{s.t}</div>
-                <div className="text-xs text-muted">{s.items.length} settings</div>
-              </div>
-            </div>
-            <div className="flex-col gap-2">
-              {s.items.map((it, j) => (
-                <div key={j} className="flex justify-between items-center" style={{ padding: '8px 0', borderTop: j === 0 ? 'none' : '1px solid var(--border-1)' }}>
-                  <span className="text-sm" style={{ color: 'var(--fg-2)' }}>{it}</span>
-                  <window.Icon name="chevron-right" size={14} style={{ stroke: 'var(--fg-4)' }} />
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* Tab bar */}
+      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border-1)', marginBottom: 24 }}>
+        {tabs.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', border: 'none', borderBottom: tab === t.id ? '2px solid var(--primary)' : '2px solid transparent', background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: tab === t.id ? 600 : 400, color: tab === t.id ? 'var(--primary)' : 'var(--fg-3)', marginBottom: -1 }}>
+            <window.Icon name={t.icon} size={14} />
+            {t.label}
+          </button>
         ))}
       </div>
+
+      {tab === 'team' && <window.TeamAccessTab />}
+
+      {tab !== 'team' && (
+        <>
+          <WireBanner>Wireframe — {tabs.find(t => t.id === tab)?.label} settings</WireBanner>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 16, marginTop: 16 }}>
+            {(wireframeSections[tab]?.items || []).map((it, j) => (
+              <div key={j} className="card card-pad flex justify-between items-center">
+                <span className="text-sm" style={{ color: 'var(--fg-2)' }}>{it}</span>
+                <window.Icon name="chevron-right" size={14} style={{ stroke: 'var(--fg-4)' }} />
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

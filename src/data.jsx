@@ -12,7 +12,7 @@ const SERVICES = {
 const LIFECYCLE = ['new', 'engaged', 'paid', 'dormant', 'churned'];
 
 const FUNNEL_LABELS = {
-  RR: ['Landed', 'Pricing seen', 'Checkout', 'Paid', 'Draft generated', 'Reviewer assigned', 'Delivered'],
+  RR: ['Landed', 'Pricing seen', 'Checkout', 'Paid', 'Writer assigned', 'In Review', 'Delivered'],
   RB: ['Landed', 'Editor opened', 'Section completed', 'Resume saved', 'Downloaded', 'Paywall seen', 'Paid'],
   LO: ['Landed', 'Resume uploaded', 'LinkedIn URL added', 'Pricing seen', 'Paid', 'Profile generated', 'Downloaded'],
   IIQ:['Landed', 'Free mock booked', 'Free mock done', 'Score viewed', 'Paywall seen', 'Paid', 'Paid mock done'],
@@ -158,7 +158,7 @@ const CANDIDATES = buildCandidates();
 function buildOrders() {
   const r = rand(7);
   const list = [];
-  const states = ['Pending draft','Awaiting reviewer','In review','Ready for delivery','Delivered','Cancelled'];
+  const states = ['New','In Review','Report Ready','Delivered','Cancelled'];
   for (let i = 0; i < 22; i++) {
     const cand = CANDIDATES[Math.floor(r() * CANDIDATES.length)];
     const state = states[Math.floor(r() * (states.length - 0.5))];
@@ -166,15 +166,12 @@ function buildOrders() {
     const slaTotal = 48 * 60; // minutes
     const elapsed = Math.floor((Date.now() - placed) / 60000);
     const remaining = slaTotal - elapsed;
-    const reviewerOptions = ['Aditi K.','Vivek M.','Sana R.','—','Riya S.','Tanmay G.'];
-    const reviewer = state === 'Pending draft' ? '—' : reviewerOptions[Math.floor(r()*reviewerOptions.length)];
     list.push({
       id: 'RR-' + (5400 + i),
       candidate: cand,
       state,
       placed,
       slaRemainingMin: remaining,
-      reviewer,
       score: cand.score,
     });
   }
@@ -265,7 +262,7 @@ function buildTimelineFor(cand) {
   return [
     { type: 'svc-paid',   icon: 'card',  tone: 'violet', when: relDate(0, 11, 12),   text: 'Paid for Resume Report',         meta: ['₹99', 'Order RR-5418'] },
     { type: 'svc-state',  icon: 'sparkles', tone: 'violet', when: relDate(0, 11, 13), text: 'AI draft generated',             meta: ['1.4s', 'v1'] },
-    { type: 'svc-state',  icon: 'user', tone: 'green', when: relDate(0, 14, 6),     text: 'Reviewer assigned: Aditi K.',     meta: [] },
+    { type: 'svc-state',  icon: 'user', tone: 'green', when: relDate(0, 14, 6),     text: 'Writer assigned: Aditi K.',       meta: [] },
     { type: 'doc',        icon: 'file', tone: 'green', when: relDate(1, 17, 32),    text: 'Resume v2 uploaded by candidate', meta: ['PDF · 312 KB'] },
     { type: 'svc-state',  icon: 'pulse',tone: 'amber', when: relDate(1, 16, 4),     text: 'Drop-off recorded — RB paywall',  meta: ['Resume Builder'] },
     { type: 'lifecycle',  icon: 'flag', tone: 'violet', when: relDate(2, 9, 0),     text: 'Lifecycle changed: engaged → paid', meta: ['by Sushant V.'] },

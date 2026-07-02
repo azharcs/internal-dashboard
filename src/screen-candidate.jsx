@@ -278,9 +278,9 @@ function ServicesTab({ cand }) {
 
 function DocsTab({ cand }) {
   const docs = [
-    { v: 'v3', name: cand.name.split(' ')[0] + '_Resume_FINAL.pdf', size: '286 KB', when: window.relDate(0, 14, 6), reviewer: 'Aditi K.', final: true,  score: cand.score },
-    { v: 'v2', name: cand.name.split(' ')[0] + '_Resume_v2.pdf',    size: '312 KB', when: window.relDate(1, 17, 32), reviewer: 'Aditi K.', final: false, score: cand.score ? cand.score - 7 : null },
-    { v: 'v1', name: cand.name.split(' ')[0] + '_Resume_AI_draft.pdf', size: '244 KB', when: window.relDate(3, 11, 13), reviewer: 'AI generated', final: false, score: cand.score ? cand.score - 18 : null },
+    { v: 'v3', name: cand.name.split(' ')[0] + '_Resume_FINAL.pdf', size: '286 KB', when: window.relDate(0, 14, 6), writer: 'Aditi K.', final: true,  score: cand.score },
+    { v: 'v2', name: cand.name.split(' ')[0] + '_Resume_v2.pdf',    size: '312 KB', when: window.relDate(1, 17, 32), writer: 'Aditi K.', final: false, score: cand.score ? cand.score - 7 : null },
+    { v: 'v1', name: cand.name.split(' ')[0] + '_Resume_v1.pdf',    size: '244 KB', when: window.relDate(3, 11, 13), writer: 'Aditi K.', final: false, score: cand.score ? cand.score - 18 : null },
   ];
   return (
     <div className="card">
@@ -291,7 +291,7 @@ function DocsTab({ cand }) {
             <tr key={i}>
               <td><span className="tnum text-xs cap" style={{ color: 'var(--fg-3)' }}>{d.v}</span> {d.final && <Pill tone="violet">Final</Pill>}</td>
               <td><div className="flex items-center gap-2"><window.Icon name="file" size={14} /><span className="font-semi">{d.name}</span><span className="text-xs text-muted">{d.size}</span></div></td>
-              <td className="muted">{d.reviewer}</td>
+              <td className="muted">{d.writer}</td>
               <td><ScoreBadge value={d.score} /></td>
               <td className="muted">{fmtDate(d.when)}</td>
               <td>

@@ -1222,7 +1222,6 @@ function RCDetailScreen({ orderId, goBack }) {
   const history = [
     { actor: 'System', action: 'order created', when: order.placed },
     ...(order.recruiter !== '—' ? [{ actor: 'Sushant V.', action: `assigned recruiter ${order.recruiter}`, when: relDate(order.daysSincePayment, 9, 30), reason: 'Domain match' }] : []),
-    ...(order.reviewer !== '—' ? [{ actor: 'Aditi K.', action: `assigned reviewer ${order.reviewer}`, when: relDate(0, 11, 0) }] : []),
   ];
 
   return (

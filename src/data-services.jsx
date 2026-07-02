@@ -5,7 +5,7 @@ const RC_STATES_ALL = ['New','Scheduled','Conducted','No-show','Report Ready','D
 
 function _rand(seed) { let s = seed; return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; }; }
 
-// Expanded RR orders with full state machine + writer/reviewer/coupon
+// Expanded RR orders with full state machine + writer/coupon
 function buildRROrdersFull() {
   const r = _rand(7);
   const writers = ['—','Aditi K.','Vivek M.','Sana R.'];
@@ -147,7 +147,6 @@ const MRR_STATES_ALL = ['New','Resume Received','In Rewrite','Delivered','Cancel
 function buildMRROrders() {
   const r = _rand(137);
   const writers = ['—','Aditi K.','Vivek M.','Sana R.','Riya S.'];
-  const reviewers = ['—','Naveen K.','Priya M.','Karthik S.'];
   const plans = [
     { key: 'pro',     label: 'Resume Pro',     price: 2300, services: ['Resume Report','Recruiter Connect','Manual Resume Rewriting'] },
     { key: 'package', label: 'Resume Package', price: 2800, services: ['Resume Report','Recruiter Connect','Manual Resume Rewriting','LinkedIn Optimisation','Manual Cover Letter'] },

@@ -68,7 +68,6 @@ function HomeScreen({ setRoute, openCandidate }) {
                 <th>Candidate</th>
                 <th>Score</th>
                 <th>State</th>
-                <th>Reviewer</th>
                 <th>SLA</th>
                 <th></th>
               </tr>
@@ -88,7 +87,6 @@ function HomeScreen({ setRoute, openCandidate }) {
                   </td>
                   <td><ScoreBadge value={o.score} /></td>
                   <td><Pill tone={stateTone(o.state)} dot>{o.state}</Pill></td>
-                  <td className="muted">{o.reviewer}</td>
                   <td><SlaBadge minutesLeft={o.slaRemainingMin} /></td>
                   <td><button className="row-actions" onClick={e => e.stopPropagation()}><window.Icon name="more" /></button></td>
                 </tr>
@@ -265,7 +263,7 @@ function PersonalizedHome({ access, setRoute, openCandidate }) {
 
   // My assigned RR orders
   const myRR = access.canAccess('RR')
-    ? (window.RR_ORDERS_FULL || []).filter(o => o.writer === user.name || o.reviewer === user.name).filter(o => !['Closed','Cancelled'].includes(o.state))
+    ? (window.RR_ORDERS_FULL || []).filter(o => o.writer === user.name).filter(o => !['Delivered','Cancelled'].includes(o.state))
     : [];
 
   // My assigned MRR orders
@@ -309,14 +307,13 @@ function PersonalizedHome({ access, setRoute, openCandidate }) {
               <button className="btn btn-ghost btn-sm" onClick={() => setRoute({ id: 'svc-rr', code: 'RR' })}>View all <window.Icon name="chevron-right" size={12} /></button>
             </div>
             <table className="tbl">
-              <thead><tr><th>Order</th><th>Candidate</th><th>Status</th><th>Role</th><th>SLA</th><th>Score</th></tr></thead>
+              <thead><tr><th>Order</th><th>Candidate</th><th>Status</th><th>SLA</th><th>Score</th></tr></thead>
               <tbody>
                 {myRR.slice(0,6).map(o => (
                   <tr key={o.id} style={{ cursor: 'pointer' }} onClick={() => openCandidate && openCandidate(o.candidate.id)}>
                     <td className="tnum text-muted">{o.id}</td>
                     <td><div className="av-row"><Avatar initials={o.candidate.avatarInitials} /><div><div className="n">{o.candidate.name}</div><div className="e">{o.candidate.email}</div></div></div></td>
                     <td><Pill tone={window.rrStateTone(o.state)} dot>{o.state}</Pill></td>
-                    <td className="text-xs text-muted">{o.writer === user.name ? 'Writer' : 'Reviewer'}</td>
                     <td><SlaBadge minutesLeft={o.slaRemainingMin} /></td>
                     <td><ScoreBadge value={o.score} /></td>
                   </tr>

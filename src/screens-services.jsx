@@ -194,7 +194,7 @@ function RRListScreen({ openOrder }) {
   const counts = {};
   window.RR_STATES_ALL.forEach(s => counts[s] = orders.filter(o => o.state === s).length);
 
-  const open = orders.filter(o => !['Closed','Cancelled'].includes(o.state));
+  const open = orders.filter(o => !['Delivered','Cancelled'].includes(o.state));
   const breached = open.filter(o => o.slaRemainingMin < 0).length;
   const risk = open.filter(o => o.slaRemainingMin >= 0 && o.slaRemainingMin < 4*60).length;
 
@@ -229,12 +229,6 @@ function RRListScreen({ openOrder }) {
               <label key={w} className="filter-chip"><span className="filter-chip-cb"></span><span>{w}</span></label>
             ))}
           </div>
-          <h4>AI draft state</h4>
-          <div className="filter-group">
-            {['Pending','Generating','Ready','Failed'].map(w => (
-              <label key={w} className="filter-chip"><span className="filter-chip-cb"></span><span>{w}</span></label>
-            ))}
-          </div>
         </FilterRail>
 
         <div className="table-wrap">
@@ -246,18 +240,16 @@ function RRListScreen({ openOrder }) {
           </div>
           <table className="tbl">
             <thead><tr>
-              <th>Order</th><th>Candidate</th><th>Tier</th><th>Status</th>
-              <th>Writer</th><th>Reviewer</th><th>SLA</th><th>Score</th><th>Paid</th><th>Coupon</th><th></th>
+              <th>Order</th><th>Candidate</th><th>Status</th>
+              <th>Writer</th><th>SLA</th><th>Score</th><th>Paid</th><th>Coupon</th><th></th>
             </tr></thead>
             <tbody>
               {filtered.map(o => (
                 <tr key={o.id} onClick={() => openOrder && openOrder(o.id)} style={{ cursor: 'pointer' }}>
                   <td className="tnum text-muted">{o.id}</td>
                   <td><div className="av-row"><Avatar initials={o.candidate.avatarInitials} /><div><div className="n">{o.candidate.name}</div><div className="e">{o.candidate.email}</div></div></div></td>
-                  <td className="text-xs text-muted">{o.tier}</td>
                   <td><Pill tone={window.rrStateTone(o.state)} dot>{o.state}</Pill></td>
                   <td className="muted text-sm">{o.writer}</td>
-                  <td className="muted text-sm">{o.reviewer}</td>
                   <td><SlaBadge minutesLeft={o.slaRemainingMin} /></td>
                   <td><ScoreBadge value={o.score} /></td>
                   <td><Currency value={o.amountPaid} /></td>
@@ -399,7 +391,7 @@ function RRDetailScreen({ orderId, goBack }) {
   ].filter((_, i) => i < (order.writer === '—' ? 1 : 2));
 
   const versions = [
-    { v: 'v2', uploader: assignedWriter !== '—' ? assignedWriter : 'Aditi K.', when: relDate(0, 16, 0), note: 'Final pass — clarified GCC alignment in summary', isFinal: order.state === 'Closed' },
+    { v: 'v2', uploader: assignedWriter !== '—' ? assignedWriter : 'Aditi K.', when: relDate(0, 16, 0), note: 'Final pass — clarified GCC alignment in summary', isFinal: order.state === 'Delivered' },
     { v: 'v1', uploader: assignedWriter !== '—' ? assignedWriter : 'Aditi K.', when: relDate(0, 13, 22), note: 'Initial report draft' },
   ];
 
@@ -423,7 +415,6 @@ function RRDetailScreen({ orderId, goBack }) {
           <p>Resume Report · placed {fmtDateTime(order.placed)}</p>
         </div>
         <div className="page-head-actions">
-          <button className="btn btn-secondary"><Icon name="flag" /> Flag for refund</button>
           <button className="btn btn-secondary"><Icon name="more" /></button>
         </div>
       </div>
@@ -507,12 +498,6 @@ function RRDetailScreen({ orderId, goBack }) {
                     {v.isFinal ? <Pill tone="green" dot>Final</Pill> : <button className="btn btn-ghost btn-sm">Mark as final</button>}
                   </div>
                 ))}
-              </div>
-            )}
-            {order.state === 'Ready for Delivery' && (
-              <div style={{ padding: '12px 20px', background: 'var(--primary-50)', borderTop: '1px solid var(--border-1)', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Icon name="info" size={14} style={{ stroke: 'var(--primary)' }} />
-                <span className="text-sm" style={{ color: 'var(--primary-800)' }}>Delivery is handled externally. The dashboard's job is done.</span>
               </div>
             )}
           </div>
@@ -1175,7 +1160,7 @@ function RCListScreen({ openOrder }) {
         <KpiTile label="Awaiting schedule" value={orders.filter(o => o.state === 'New').length} sub="needs assignment" tone="amber" />
         <KpiTile label="Calls this week" value={orders.filter(o => o.state === 'Scheduled').length} sub="confirmed" />
         <KpiTile label="Reports pending" value={orders.filter(o => o.state === 'Conducted').length} sub="post-call" />
-        <KpiTile label="Ready to deliver" value={orders.filter(o => o.state === 'Ready for Delivery').length} sub="QC passed" tone="green" />
+        <KpiTile label="Report ready" value={orders.filter(o => o.state === 'Report Ready').length} sub="ready to deliver" tone="green" />
       </div>
 
       <div className="list-layout">
@@ -1252,9 +1237,6 @@ function RCDetailScreen({ orderId, goBack }) {
           <div className="flex items-center gap-3"><h1>{order.id}</h1><Pill tone={window.rcStateTone(order.state)} dot>{order.state}</Pill></div>
           <p>Recruiter Connect · placed {fmtDateTime(order.placed)}</p>
         </div>
-        <div className="page-head-actions">
-          <button className="btn btn-secondary"><Icon name="flag" /> Flag for refund</button>
-        </div>
       </div>
 
       <div style={{ display: 'flex', gap: 20 }}>
@@ -1316,7 +1298,7 @@ function RCDetailScreen({ orderId, goBack }) {
             </div>
             <div style={{ padding: 20 }}>
               {!slotPassed && order.state === 'Scheduled' && <div className="text-sm text-muted" style={{ marginBottom: 14 }}>Mark actions enable after the slot has passed.</div>}
-              {['Conducted','Report Drafted','QC Passed','Ready for Delivery','Closed'].includes(order.state) && (
+              {['Conducted','Report Ready','Delivered'].includes(order.state) && (
                 <>
                   <div className="text-xs cap mb-2" style={{ color: 'var(--fg-3)' }}>Recruiter summary</div>
                   <div style={{ background: 'var(--bg-alt)', padding: 14, borderRadius: 8, marginBottom: 14 }}>
@@ -1330,11 +1312,11 @@ function RCDetailScreen({ orderId, goBack }) {
           </div>
 
           {/* Report panel */}
-          {['Report Drafted','QC Passed','Ready for Delivery','Closed'].includes(order.state) && (
+          {['Report Ready','Delivered'].includes(order.state) && (
             <div className="card mb-4">
               <div className="card-head"><h3 className="card-title">Report</h3><span className="text-xs text-muted">2 versions</span></div>
               <div style={{ padding: 8 }}>
-                {[{ v: 'v2', uploader: order.recruiter, when: relDate(0, 14, 30), note: 'Polished tone in recommendation block', isFinal: order.state === 'Closed' },
+                {[{ v: 'v2', uploader: order.recruiter, when: relDate(0, 14, 30), note: 'Polished tone in recommendation block', isFinal: order.state === 'Delivered' },
                   { v: 'v1', uploader: order.recruiter, when: relDate(1, 11, 0) }].map((v, i) => (
                   <div key={i} className="flex items-center gap-3" style={{ padding: '12px 14px', borderBottom: i === 0 ? '1px solid var(--border-1)' : 'none' }}>
                     <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--primary-800)', background: 'var(--primary-50)', padding: '3px 8px', borderRadius: 4 }}>{v.v}</span>
@@ -1344,12 +1326,6 @@ function RCDetailScreen({ orderId, goBack }) {
                   </div>
                 ))}
               </div>
-              {order.state === 'Ready for Delivery' && (
-                <div style={{ padding: '12px 20px', background: 'var(--primary-50)', borderTop: '1px solid var(--border-1)', display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Icon name="info" size={14} style={{ stroke: 'var(--primary)' }} />
-                  <span className="text-sm" style={{ color: 'var(--primary-800)' }}>Delivery is handled externally. The dashboard's job is done.</span>
-                </div>
-              )}
             </div>
           )}
 
@@ -1395,7 +1371,7 @@ function MRRListScreen({ openOrder }) {
         <KpiTile label="Open" value={open.length} sub="not delivered" />
         <KpiTile label="Awaiting resume" value={orders.filter(o => o.state === 'New').length} sub="candidate to upload" tone="amber" />
         <KpiTile label="In rewrite" value={orders.filter(o => o.state === 'In Rewrite').length} sub="being worked on" tone="violet" />
-        <KpiTile label="Ready to deliver" value={orders.filter(o => o.state === 'Ready for Delivery').length} sub="QC passed" tone="green" />
+        <KpiTile label="Delivered" value={orders.filter(o => o.state === 'Delivered').length} sub="completed" tone="green" />
       </div>
 
       <div className="list-layout">
@@ -1482,9 +1458,6 @@ function MRRDetailScreen({ orderId, goBack }) {
             <span style={{ fontSize: 11, fontWeight: 600, color: planColor.fg, background: planColor.bg, padding: '2px 10px', borderRadius: 4 }}>{order.plan.label}</span>
           </div>
           <p>Manual Resume Rewrite · placed {fmtDateTime(order.placed)}</p>
-        </div>
-        <div className="page-head-actions">
-          <button className="btn btn-secondary"><Icon name="flag" /> Flag for refund</button>
         </div>
       </div>
 

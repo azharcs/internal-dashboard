@@ -36385,16 +36385,15 @@ window.buildTimelineFor = buildTimelineFor;
 <script type="text/babel">
 /* Extended data for service detail screens */
 
-const RR_STATES_ALL = ['New','AI Generating','AI Draft Ready','In Review','Report Drafted','QC Passed','Ready for Delivery','Closed','On Hold','Cancelled','Refund Flagged','AI Failed'];
-const RC_STATES_ALL = ['New','Scheduled','Conducted','No-show','Rescheduled','Report Drafted','QC Passed','Ready for Delivery','Closed','On Hold','Cancelled','Refund Flagged'];
+const RR_STATES_ALL = ['New','In Review','Report Ready','Delivered','Cancelled'];
+const RC_STATES_ALL = ['New','Scheduled','Conducted','No-show','Report Ready','Delivered','Cancelled'];
 
 function _rand(seed) { let s = seed; return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; }; }
 
 // Expanded RR orders with full state machine + writer/reviewer/coupon
 function buildRROrdersFull() {
   const r = _rand(7);
-  const writers = ['—','Aditi K.','Vivek M.','Sana R.','Riya S.','Tanmay G.'];
-  const reviewers = ['—','Naveen K.','Priya M.','Karthik S.'];
+  const writers = ['—','Aditi K.','Vivek M.','Sana R.'];
   const coupons = [null, null, null, 'RR99FREE', 'WELCOME99'];
   const list = [];
   for (let i = 0; i < 22; i++) {
@@ -36404,18 +36403,14 @@ function buildRROrdersFull() {
     const slaTotal = 48 * 60;
     const elapsed = Math.floor((Date.now() - placed) / 60000);
     const remaining = slaTotal - elapsed;
-    const writer = ['New','AI Generating','AI Draft Ready'].includes(state) ? '—' : writers[1 + Math.floor(r()*5)];
-    const reviewer = ['New','AI Generating','AI Draft Ready','In Review'].includes(state) || writer === '—' ? '—' : reviewers[1 + Math.floor(r()*3)];
+    const writer = ['New','Cancelled'].includes(state) ? '—' : writers[1 + Math.floor(r()*3)];
     const coupon = coupons[Math.floor(r() * coupons.length)];
     const amountPaid = coupon === 'RR99FREE' ? 49 : coupon === 'WELCOME99' ? 0 : 99;
     list.push({
       id: 'RR-' + (5400 + i),
       candidate: cand, tier: 'Standard', state, placed,
-      slaRemainingMin: remaining, writer, reviewer, coupon, amountPaid,
+      slaRemainingMin: remaining, writer, coupon, amountPaid,
       score: cand.score,
-      aiDraftState: state === 'AI Failed' ? 'failed' : state === 'AI Generating' ? 'generating' : state === 'New' ? 'pending' : 'ready',
-      aiModel: 'gpt-resume-v3.2',
-      aiGeneratedAt: window.relDate(Math.floor(r() * 5), 9 + Math.floor(r()*8)),
     });
   }
   list.sort((a, b) => a.slaRemainingMin - b.slaRemainingMin);
@@ -36509,8 +36504,7 @@ function buildIIQSessions() {
 function buildRCOrdersFull() {
   const r = _rand(91);
   const recs = ['—','Anjali Verma','Rohit Singh','Maya Krishnan','Devika P.','Akash R.'];
-  const reviewers = ['—','Naveen K.','Priya M.','Karthik S.'];
-  const callStatuses = ['—','Awaiting','Proposed','Confirmed','Conducted','Missed'];
+  const callStatuses = ['—','Awaiting','Confirmed','Conducted','Missed'];
   const coupons = [null, null, null, 'GCC500'];
   const list = [];
   for (let i = 0; i < 14; i++) {
@@ -36519,13 +36513,12 @@ function buildRCOrdersFull() {
     const placed = window.relDate(Math.floor(r() * 14), 9 + Math.floor(r()*8), Math.floor(r()*60));
     const slot = state === 'New' ? null : window.relDate(-Math.floor(r() * 7) + Math.floor(r() * 5), 11 + Math.floor(r()*7), [0,15,30,45][Math.floor(r()*4)]);
     const recruiter = state === 'New' ? '—' : recs[1 + Math.floor(r()*5)];
-    const reviewer = ['Report Drafted','QC Passed','Ready for Delivery','Closed'].includes(state) ? reviewers[1 + Math.floor(r()*3)] : '—';
     const callStatus = state === 'New' ? '—' : state === 'Scheduled' ? 'Confirmed' : state === 'Conducted' ? 'Conducted' : state === 'No-show' ? 'Missed' : ['Conducted','Confirmed'][Math.floor(r()*2)];
     const coupon = coupons[Math.floor(r() * coupons.length)];
     const daysSincePayment = Math.floor((Date.now() - placed) / 86400000);
     list.push({
       id: 'RC-' + (3200 + i),
-      candidate: cand, state, recruiter, reviewer, slot, callStatus,
+      candidate: cand, state, recruiter, slot, callStatus,
       daysSincePayment, amountPaid: coupon === 'GCC500' ? 999 : 1499, coupon,
       score: cand.score, placed,
     });
@@ -36534,7 +36527,7 @@ function buildRCOrdersFull() {
   return list;
 }
 
-const MRR_STATES_ALL = ['New','Resume Received','In Rewrite','QC Review','Ready for Delivery','Delivered','On Hold','Cancelled','Refund Flagged'];
+const MRR_STATES_ALL = ['New','Resume Received','In Rewrite','Delivered','Cancelled'];
 
 function buildMRROrders() {
   const r = _rand(137);
@@ -36555,10 +36548,9 @@ function buildMRROrders() {
     const hadRR = r() < 0.45;
     const rrDiscount = hadRR ? 99 : 0;
     const amountPaid = plan.price - rrDiscount;
-    const writer = ['New','Resume Received'].includes(state) ? '—' : writers[1 + Math.floor(r() * (writers.length-1))];
-    const reviewer = ['New','Resume Received','In Rewrite'].includes(state) ? '—' : reviewers[1 + Math.floor(r() * (reviewers.length-1))];
+    const writer = ['New','Cancelled'].includes(state) ? '—' : writers[1 + Math.floor(r() * (writers.length-1))];
     const originalScore = scores[Math.floor(r() * scores.length)];
-    const hasRewritten = ['QC Review','Ready for Delivery','Delivered'].includes(state);
+    const hasRewritten = ['Delivered'].includes(state);
     const rewrittenScore = hasRewritten ? rewrittenScores[Math.floor(r() * rewrittenScores.length)] : null;
     const hasOriginalResume = state !== 'New';
     list.push({
@@ -36570,7 +36562,6 @@ function buildMRROrders() {
       rrDiscount,
       amountPaid,
       writer,
-      reviewer,
       originalScore,
       rewrittenScore,
       originalResume: hasOriginalResume ? { name: `${cand.name.split(' ')[0]}_Resume.pdf`, uploadedAt: window.relDate(Math.floor(r()*8), 10 + Math.floor(r()*6), Math.floor(r()*60)) } : null,
@@ -36586,21 +36577,16 @@ window.MRR_STATES_ALL = MRR_STATES_ALL;
 window.MRR_ORDERS = buildMRROrders();
 
 window.mrrStateTone = (s) => ({
-  'New':'grey','Resume Received':'blue','In Rewrite':'violet','QC Review':'amber',
-  'Ready for Delivery':'green','Delivered':'grey',
-  'On Hold':'amber','Cancelled':'red','Refund Flagged':'red'
+  'New':'grey','Resume Received':'blue','In Rewrite':'violet',
+  'Delivered':'green','Cancelled':'red'
 }[s] || 'grey');
 
 window.MRR_TRANSITIONS = {
-  'New': ['Resume Received','On Hold','Cancelled'],
-  'Resume Received': ['In Rewrite','On Hold','Cancelled'],
-  'In Rewrite': ['QC Review','On Hold'],
-  'QC Review': ['Ready for Delivery','In Rewrite'],
-  'Ready for Delivery': ['Delivered'],
+  'New': ['Resume Received','Cancelled'],
+  'Resume Received': ['In Rewrite','Cancelled'],
+  'In Rewrite': ['Delivered'],
   'Delivered': [],
-  'On Hold': ['Resume Received','In Rewrite','Cancelled'],
   'Cancelled': [],
-  'Refund Flagged': ['Delivered','Cancelled'],
 };
 
 window.RR_STATES_ALL = RR_STATES_ALL;
@@ -36611,45 +36597,31 @@ window.LO_SESSIONS = buildLOSessions();
 window.IIQ_SESSIONS = buildIIQSessions();
 window.RC_ORDERS_FULL = buildRCOrdersFull();
 
-// State -> tone helpers covering the full state machine
 window.rrStateTone = (s) => ({
-  'New':'grey','AI Generating':'violet','AI Draft Ready':'blue','In Review':'violet',
-  'Report Drafted':'blue','QC Passed':'green','Ready for Delivery':'green',
-  'Closed':'grey','On Hold':'amber','Cancelled':'red','Refund Flagged':'red','AI Failed':'red'
+  'New':'grey','In Review':'violet',
+  'Report Ready':'green','Delivered':'grey','Cancelled':'red'
 }[s] || 'grey');
 
 window.rcStateTone = (s) => ({
-  'New':'grey','Scheduled':'blue','Conducted':'violet','No-show':'red','Rescheduled':'amber',
-  'Report Drafted':'blue','QC Passed':'green','Ready for Delivery':'green','Closed':'grey',
-  'On Hold':'amber','Cancelled':'red','Refund Flagged':'red'
+  'New':'grey','Scheduled':'blue','Conducted':'violet',
+  'No-show':'red','Report Ready':'green','Delivered':'grey','Cancelled':'red'
 }[s] || 'grey');
 
-// Valid transitions
 window.RR_TRANSITIONS = {
-  'New': ['AI Generating','Cancelled','On Hold'],
-  'AI Generating': ['AI Draft Ready','AI Failed'],
-  'AI Draft Ready': ['In Review','On Hold','Cancelled'],
-  'In Review': ['Report Drafted','On Hold'],
-  'Report Drafted': ['QC Passed','In Review'],
-  'QC Passed': ['Ready for Delivery'],
-  'Ready for Delivery': ['Closed'],
-  'Closed': [],
-  'On Hold': ['New','In Review','Cancelled'],
+  'New': ['In Review','Cancelled'],
+  'In Review': ['Report Ready','Cancelled'],
+  'Report Ready': ['Delivered'],
+  'Delivered': [],
   'Cancelled': [],
-  'Refund Flagged': ['Closed','Cancelled'],
-  'AI Failed': ['AI Generating','Cancelled'],
 };
 window.RC_TRANSITIONS = {
-  'New':['Scheduled','On Hold','Cancelled'],
-  'Scheduled':['Conducted','No-show','Rescheduled','On Hold'],
-  'Rescheduled':['Scheduled','Cancelled'],
-  'Conducted':['Report Drafted'],
-  'No-show':['Rescheduled','Cancelled'],
-  'Report Drafted':['QC Passed','Conducted'],
-  'QC Passed':['Ready for Delivery'],
-  'Ready for Delivery':['Closed'],
-  'Closed':[], 'On Hold':['New','Scheduled','Cancelled'],
-  'Cancelled':[], 'Refund Flagged':['Closed','Cancelled'],
+  'New': ['Scheduled','Cancelled'],
+  'Scheduled': ['Conducted','No-show'],
+  'Conducted': ['Report Ready'],
+  'No-show': ['Scheduled','Cancelled'],
+  'Report Ready': ['Delivered'],
+  'Delivered': [],
+  'Cancelled': [],
 };
 
 </script>
@@ -39830,7 +39802,7 @@ function RRListScreen({ openOrder }) {
   const counts = {};
   window.RR_STATES_ALL.forEach(s => counts[s] = orders.filter(o => o.state === s).length);
 
-  const open = orders.filter(o => !['Closed','Cancelled'].includes(o.state));
+  const open = orders.filter(o => !['Delivered','Cancelled'].includes(o.state));
   const breached = open.filter(o => o.slaRemainingMin < 0).length;
   const risk = open.filter(o => o.slaRemainingMin >= 0 && o.slaRemainingMin < 4*60).length;
 
@@ -39865,12 +39837,6 @@ function RRListScreen({ openOrder }) {
               <label key={w} className="filter-chip"><span className="filter-chip-cb"></span><span>{w}</span></label>
             ))}
           </div>
-          <h4>AI draft state</h4>
-          <div className="filter-group">
-            {['Pending','Generating','Ready','Failed'].map(w => (
-              <label key={w} className="filter-chip"><span className="filter-chip-cb"></span><span>{w}</span></label>
-            ))}
-          </div>
         </FilterRail>
 
         <div className="table-wrap">
@@ -39882,18 +39848,16 @@ function RRListScreen({ openOrder }) {
           </div>
           <table className="tbl">
             <thead><tr>
-              <th>Order</th><th>Candidate</th><th>Tier</th><th>Status</th>
-              <th>Writer</th><th>Reviewer</th><th>SLA</th><th>Score</th><th>Paid</th><th>Coupon</th><th></th>
+              <th>Order</th><th>Candidate</th><th>Status</th>
+              <th>Writer</th><th>SLA</th><th>Score</th><th>Paid</th><th>Coupon</th><th></th>
             </tr></thead>
             <tbody>
               {filtered.map(o => (
                 <tr key={o.id} onClick={() => openOrder && openOrder(o.id)} style={{ cursor: 'pointer' }}>
                   <td className="tnum text-muted">{o.id}</td>
                   <td><div className="av-row"><Avatar initials={o.candidate.avatarInitials} /><div><div className="n">{o.candidate.name}</div><div className="e">{o.candidate.email}</div></div></div></td>
-                  <td className="text-xs text-muted">{o.tier}</td>
                   <td><Pill tone={window.rrStateTone(o.state)} dot>{o.state}</Pill></td>
                   <td className="muted text-sm">{o.writer}</td>
-                  <td className="muted text-sm">{o.reviewer}</td>
                   <td><SlaBadge minutesLeft={o.slaRemainingMin} /></td>
                   <td><ScoreBadge value={o.score} /></td>
                   <td><Currency value={o.amountPaid} /></td>
@@ -40035,7 +39999,7 @@ function RRDetailScreen({ orderId, goBack }) {
   ].filter((_, i) => i < (order.writer === '—' ? 1 : 2));
 
   const versions = [
-    { v: 'v2', uploader: assignedWriter !== '—' ? assignedWriter : 'Aditi K.', when: relDate(0, 16, 0), note: 'Final pass — clarified GCC alignment in summary', isFinal: order.state === 'Closed' },
+    { v: 'v2', uploader: assignedWriter !== '—' ? assignedWriter : 'Aditi K.', when: relDate(0, 16, 0), note: 'Final pass — clarified GCC alignment in summary', isFinal: order.state === 'Delivered' },
     { v: 'v1', uploader: assignedWriter !== '—' ? assignedWriter : 'Aditi K.', when: relDate(0, 13, 22), note: 'Initial report draft' },
   ];
 
@@ -40059,7 +40023,6 @@ function RRDetailScreen({ orderId, goBack }) {
           <p>Resume Report · placed {fmtDateTime(order.placed)}</p>
         </div>
         <div className="page-head-actions">
-          <button className="btn btn-secondary"><Icon name="flag" /> Flag for refund</button>
           <button className="btn btn-secondary"><Icon name="more" /></button>
         </div>
       </div>
@@ -40143,12 +40106,6 @@ function RRDetailScreen({ orderId, goBack }) {
                     {v.isFinal ? <Pill tone="green" dot>Final</Pill> : <button className="btn btn-ghost btn-sm">Mark as final</button>}
                   </div>
                 ))}
-              </div>
-            )}
-            {order.state === 'Ready for Delivery' && (
-              <div style={{ padding: '12px 20px', background: 'var(--primary-50)', borderTop: '1px solid var(--border-1)', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Icon name="info" size={14} style={{ stroke: 'var(--primary)' }} />
-                <span className="text-sm" style={{ color: 'var(--primary-800)' }}>Delivery is handled externally. The dashboard's job is done.</span>
               </div>
             )}
           </div>
@@ -40811,7 +40768,7 @@ function RCListScreen({ openOrder }) {
         <KpiTile label="Awaiting schedule" value={orders.filter(o => o.state === 'New').length} sub="needs assignment" tone="amber" />
         <KpiTile label="Calls this week" value={orders.filter(o => o.state === 'Scheduled').length} sub="confirmed" />
         <KpiTile label="Reports pending" value={orders.filter(o => o.state === 'Conducted').length} sub="post-call" />
-        <KpiTile label="Ready to deliver" value={orders.filter(o => o.state === 'Ready for Delivery').length} sub="QC passed" tone="green" />
+        <KpiTile label="Report ready" value={orders.filter(o => o.state === 'Report Ready').length} sub="ready to deliver" tone="green" />
       </div>
 
       <div className="list-layout">
@@ -40888,9 +40845,6 @@ function RCDetailScreen({ orderId, goBack }) {
           <div className="flex items-center gap-3"><h1>{order.id}</h1><Pill tone={window.rcStateTone(order.state)} dot>{order.state}</Pill></div>
           <p>Recruiter Connect · placed {fmtDateTime(order.placed)}</p>
         </div>
-        <div className="page-head-actions">
-          <button className="btn btn-secondary"><Icon name="flag" /> Flag for refund</button>
-        </div>
       </div>
 
       <div style={{ display: 'flex', gap: 20 }}>
@@ -40952,7 +40906,7 @@ function RCDetailScreen({ orderId, goBack }) {
             </div>
             <div style={{ padding: 20 }}>
               {!slotPassed && order.state === 'Scheduled' && <div className="text-sm text-muted" style={{ marginBottom: 14 }}>Mark actions enable after the slot has passed.</div>}
-              {['Conducted','Report Drafted','QC Passed','Ready for Delivery','Closed'].includes(order.state) && (
+              {['Conducted','Report Ready','Delivered'].includes(order.state) && (
                 <>
                   <div className="text-xs cap mb-2" style={{ color: 'var(--fg-3)' }}>Recruiter summary</div>
                   <div style={{ background: 'var(--bg-alt)', padding: 14, borderRadius: 8, marginBottom: 14 }}>
@@ -40966,11 +40920,11 @@ function RCDetailScreen({ orderId, goBack }) {
           </div>
 
           {/* Report panel */}
-          {['Report Drafted','QC Passed','Ready for Delivery','Closed'].includes(order.state) && (
+          {['Report Ready','Delivered'].includes(order.state) && (
             <div className="card mb-4">
               <div className="card-head"><h3 className="card-title">Report</h3><span className="text-xs text-muted">2 versions</span></div>
               <div style={{ padding: 8 }}>
-                {[{ v: 'v2', uploader: order.recruiter, when: relDate(0, 14, 30), note: 'Polished tone in recommendation block', isFinal: order.state === 'Closed' },
+                {[{ v: 'v2', uploader: order.recruiter, when: relDate(0, 14, 30), note: 'Polished tone in recommendation block', isFinal: order.state === 'Delivered' },
                   { v: 'v1', uploader: order.recruiter, when: relDate(1, 11, 0) }].map((v, i) => (
                   <div key={i} className="flex items-center gap-3" style={{ padding: '12px 14px', borderBottom: i === 0 ? '1px solid var(--border-1)' : 'none' }}>
                     <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--primary-800)', background: 'var(--primary-50)', padding: '3px 8px', borderRadius: 4 }}>{v.v}</span>
@@ -40980,12 +40934,6 @@ function RCDetailScreen({ orderId, goBack }) {
                   </div>
                 ))}
               </div>
-              {order.state === 'Ready for Delivery' && (
-                <div style={{ padding: '12px 20px', background: 'var(--primary-50)', borderTop: '1px solid var(--border-1)', display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Icon name="info" size={14} style={{ stroke: 'var(--primary)' }} />
-                  <span className="text-sm" style={{ color: 'var(--primary-800)' }}>Delivery is handled externally. The dashboard's job is done.</span>
-                </div>
-              )}
             </div>
           )}
 
@@ -41031,7 +40979,7 @@ function MRRListScreen({ openOrder }) {
         <KpiTile label="Open" value={open.length} sub="not delivered" />
         <KpiTile label="Awaiting resume" value={orders.filter(o => o.state === 'New').length} sub="candidate to upload" tone="amber" />
         <KpiTile label="In rewrite" value={orders.filter(o => o.state === 'In Rewrite').length} sub="being worked on" tone="violet" />
-        <KpiTile label="Ready to deliver" value={orders.filter(o => o.state === 'Ready for Delivery').length} sub="QC passed" tone="green" />
+        <KpiTile label="Delivered" value={orders.filter(o => o.state === 'Delivered').length} sub="completed" tone="green" />
       </div>
 
       <div className="list-layout">
@@ -41118,9 +41066,6 @@ function MRRDetailScreen({ orderId, goBack }) {
             <span style={{ fontSize: 11, fontWeight: 600, color: planColor.fg, background: planColor.bg, padding: '2px 10px', borderRadius: 4 }}>{order.plan.label}</span>
           </div>
           <p>Manual Resume Rewrite · placed {fmtDateTime(order.placed)}</p>
-        </div>
-        <div className="page-head-actions">
-          <button className="btn btn-secondary"><Icon name="flag" /> Flag for refund</button>
         </div>
       </div>
 

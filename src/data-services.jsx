@@ -1,15 +1,14 @@
 /* Extended data for service detail screens */
 
-const RR_STATES_ALL = ['New','AI Generating','AI Draft Ready','In Review','Report Drafted','QC Passed','Ready for Delivery','Closed','On Hold','Cancelled','Refund Flagged','AI Failed'];
-const RC_STATES_ALL = ['New','Scheduled','Conducted','No-show','Rescheduled','Report Drafted','QC Passed','Ready for Delivery','Closed','On Hold','Cancelled','Refund Flagged'];
+const RR_STATES_ALL = ['New','In Review','Report Ready','Delivered','Cancelled'];
+const RC_STATES_ALL = ['New','Scheduled','Conducted','No-show','Report Ready','Delivered','Cancelled'];
 
 function _rand(seed) { let s = seed; return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; }; }
 
 // Expanded RR orders with full state machine + writer/reviewer/coupon
 function buildRROrdersFull() {
   const r = _rand(7);
-  const writers = ['—','Aditi K.','Vivek M.','Sana R.','Riya S.','Tanmay G.'];
-  const reviewers = ['—','Naveen K.','Priya M.','Karthik S.'];
+  const writers = ['—','Aditi K.','Vivek M.','Sana R.'];
   const coupons = [null, null, null, 'RR99FREE', 'WELCOME99'];
   const list = [];
   for (let i = 0; i < 22; i++) {
@@ -19,18 +18,14 @@ function buildRROrdersFull() {
     const slaTotal = 48 * 60;
     const elapsed = Math.floor((Date.now() - placed) / 60000);
     const remaining = slaTotal - elapsed;
-    const writer = ['New','AI Generating','AI Draft Ready'].includes(state) ? '—' : writers[1 + Math.floor(r()*5)];
-    const reviewer = ['New','AI Generating','AI Draft Ready','In Review'].includes(state) || writer === '—' ? '—' : reviewers[1 + Math.floor(r()*3)];
+    const writer = ['New','Cancelled'].includes(state) ? '—' : writers[1 + Math.floor(r()*3)];
     const coupon = coupons[Math.floor(r() * coupons.length)];
     const amountPaid = coupon === 'RR99FREE' ? 49 : coupon === 'WELCOME99' ? 0 : 99;
     list.push({
       id: 'RR-' + (5400 + i),
       candidate: cand, tier: 'Standard', state, placed,
-      slaRemainingMin: remaining, writer, reviewer, coupon, amountPaid,
+      slaRemainingMin: remaining, writer, coupon, amountPaid,
       score: cand.score,
-      aiDraftState: state === 'AI Failed' ? 'failed' : state === 'AI Generating' ? 'generating' : state === 'New' ? 'pending' : 'ready',
-      aiModel: 'gpt-resume-v3.2',
-      aiGeneratedAt: window.relDate(Math.floor(r() * 5), 9 + Math.floor(r()*8)),
     });
   }
   list.sort((a, b) => a.slaRemainingMin - b.slaRemainingMin);
@@ -124,8 +119,7 @@ function buildIIQSessions() {
 function buildRCOrdersFull() {
   const r = _rand(91);
   const recs = ['—','Anjali Verma','Rohit Singh','Maya Krishnan','Devika P.','Akash R.'];
-  const reviewers = ['—','Naveen K.','Priya M.','Karthik S.'];
-  const callStatuses = ['—','Awaiting','Proposed','Confirmed','Conducted','Missed'];
+  const callStatuses = ['—','Awaiting','Confirmed','Conducted','Missed'];
   const coupons = [null, null, null, 'GCC500'];
   const list = [];
   for (let i = 0; i < 14; i++) {
@@ -134,13 +128,12 @@ function buildRCOrdersFull() {
     const placed = window.relDate(Math.floor(r() * 14), 9 + Math.floor(r()*8), Math.floor(r()*60));
     const slot = state === 'New' ? null : window.relDate(-Math.floor(r() * 7) + Math.floor(r() * 5), 11 + Math.floor(r()*7), [0,15,30,45][Math.floor(r()*4)]);
     const recruiter = state === 'New' ? '—' : recs[1 + Math.floor(r()*5)];
-    const reviewer = ['Report Drafted','QC Passed','Ready for Delivery','Closed'].includes(state) ? reviewers[1 + Math.floor(r()*3)] : '—';
     const callStatus = state === 'New' ? '—' : state === 'Scheduled' ? 'Confirmed' : state === 'Conducted' ? 'Conducted' : state === 'No-show' ? 'Missed' : ['Conducted','Confirmed'][Math.floor(r()*2)];
     const coupon = coupons[Math.floor(r() * coupons.length)];
     const daysSincePayment = Math.floor((Date.now() - placed) / 86400000);
     list.push({
       id: 'RC-' + (3200 + i),
-      candidate: cand, state, recruiter, reviewer, slot, callStatus,
+      candidate: cand, state, recruiter, slot, callStatus,
       daysSincePayment, amountPaid: coupon === 'GCC500' ? 999 : 1499, coupon,
       score: cand.score, placed,
     });
@@ -149,7 +142,7 @@ function buildRCOrdersFull() {
   return list;
 }
 
-const MRR_STATES_ALL = ['New','Resume Received','In Rewrite','QC Review','Ready for Delivery','Delivered','On Hold','Cancelled','Refund Flagged'];
+const MRR_STATES_ALL = ['New','Resume Received','In Rewrite','Delivered','Cancelled'];
 
 function buildMRROrders() {
   const r = _rand(137);
@@ -170,10 +163,9 @@ function buildMRROrders() {
     const hadRR = r() < 0.45;
     const rrDiscount = hadRR ? 99 : 0;
     const amountPaid = plan.price - rrDiscount;
-    const writer = ['New','Resume Received'].includes(state) ? '—' : writers[1 + Math.floor(r() * (writers.length-1))];
-    const reviewer = ['New','Resume Received','In Rewrite'].includes(state) ? '—' : reviewers[1 + Math.floor(r() * (reviewers.length-1))];
+    const writer = ['New','Cancelled'].includes(state) ? '—' : writers[1 + Math.floor(r() * (writers.length-1))];
     const originalScore = scores[Math.floor(r() * scores.length)];
-    const hasRewritten = ['QC Review','Ready for Delivery','Delivered'].includes(state);
+    const hasRewritten = ['Delivered'].includes(state);
     const rewrittenScore = hasRewritten ? rewrittenScores[Math.floor(r() * rewrittenScores.length)] : null;
     const hasOriginalResume = state !== 'New';
     list.push({
@@ -185,7 +177,6 @@ function buildMRROrders() {
       rrDiscount,
       amountPaid,
       writer,
-      reviewer,
       originalScore,
       rewrittenScore,
       originalResume: hasOriginalResume ? { name: `${cand.name.split(' ')[0]}_Resume.pdf`, uploadedAt: window.relDate(Math.floor(r()*8), 10 + Math.floor(r()*6), Math.floor(r()*60)) } : null,
@@ -201,21 +192,16 @@ window.MRR_STATES_ALL = MRR_STATES_ALL;
 window.MRR_ORDERS = buildMRROrders();
 
 window.mrrStateTone = (s) => ({
-  'New':'grey','Resume Received':'blue','In Rewrite':'violet','QC Review':'amber',
-  'Ready for Delivery':'green','Delivered':'grey',
-  'On Hold':'amber','Cancelled':'red','Refund Flagged':'red'
+  'New':'grey','Resume Received':'blue','In Rewrite':'violet',
+  'Delivered':'green','Cancelled':'red'
 }[s] || 'grey');
 
 window.MRR_TRANSITIONS = {
-  'New': ['Resume Received','On Hold','Cancelled'],
-  'Resume Received': ['In Rewrite','On Hold','Cancelled'],
-  'In Rewrite': ['QC Review','On Hold'],
-  'QC Review': ['Ready for Delivery','In Rewrite'],
-  'Ready for Delivery': ['Delivered'],
+  'New': ['Resume Received','Cancelled'],
+  'Resume Received': ['In Rewrite','Cancelled'],
+  'In Rewrite': ['Delivered'],
   'Delivered': [],
-  'On Hold': ['Resume Received','In Rewrite','Cancelled'],
   'Cancelled': [],
-  'Refund Flagged': ['Delivered','Cancelled'],
 };
 
 window.RR_STATES_ALL = RR_STATES_ALL;
@@ -226,43 +212,29 @@ window.LO_SESSIONS = buildLOSessions();
 window.IIQ_SESSIONS = buildIIQSessions();
 window.RC_ORDERS_FULL = buildRCOrdersFull();
 
-// State -> tone helpers covering the full state machine
 window.rrStateTone = (s) => ({
-  'New':'grey','AI Generating':'violet','AI Draft Ready':'blue','In Review':'violet',
-  'Report Drafted':'blue','QC Passed':'green','Ready for Delivery':'green',
-  'Closed':'grey','On Hold':'amber','Cancelled':'red','Refund Flagged':'red','AI Failed':'red'
+  'New':'grey','In Review':'violet',
+  'Report Ready':'green','Delivered':'grey','Cancelled':'red'
 }[s] || 'grey');
 
 window.rcStateTone = (s) => ({
-  'New':'grey','Scheduled':'blue','Conducted':'violet','No-show':'red','Rescheduled':'amber',
-  'Report Drafted':'blue','QC Passed':'green','Ready for Delivery':'green','Closed':'grey',
-  'On Hold':'amber','Cancelled':'red','Refund Flagged':'red'
+  'New':'grey','Scheduled':'blue','Conducted':'violet',
+  'No-show':'red','Report Ready':'green','Delivered':'grey','Cancelled':'red'
 }[s] || 'grey');
 
-// Valid transitions
 window.RR_TRANSITIONS = {
-  'New': ['AI Generating','Cancelled','On Hold'],
-  'AI Generating': ['AI Draft Ready','AI Failed'],
-  'AI Draft Ready': ['In Review','On Hold','Cancelled'],
-  'In Review': ['Report Drafted','On Hold'],
-  'Report Drafted': ['QC Passed','In Review'],
-  'QC Passed': ['Ready for Delivery'],
-  'Ready for Delivery': ['Closed'],
-  'Closed': [],
-  'On Hold': ['New','In Review','Cancelled'],
+  'New': ['In Review','Cancelled'],
+  'In Review': ['Report Ready','Cancelled'],
+  'Report Ready': ['Delivered'],
+  'Delivered': [],
   'Cancelled': [],
-  'Refund Flagged': ['Closed','Cancelled'],
-  'AI Failed': ['AI Generating','Cancelled'],
 };
 window.RC_TRANSITIONS = {
-  'New':['Scheduled','On Hold','Cancelled'],
-  'Scheduled':['Conducted','No-show','Rescheduled','On Hold'],
-  'Rescheduled':['Scheduled','Cancelled'],
-  'Conducted':['Report Drafted'],
-  'No-show':['Rescheduled','Cancelled'],
-  'Report Drafted':['QC Passed','Conducted'],
-  'QC Passed':['Ready for Delivery'],
-  'Ready for Delivery':['Closed'],
-  'Closed':[], 'On Hold':['New','Scheduled','Cancelled'],
-  'Cancelled':[], 'Refund Flagged':['Closed','Cancelled'],
+  'New': ['Scheduled','Cancelled'],
+  'Scheduled': ['Conducted','No-show'],
+  'Conducted': ['Report Ready'],
+  'No-show': ['Scheduled','Cancelled'],
+  'Report Ready': ['Delivered'],
+  'Delivered': [],
+  'Cancelled': [],
 };

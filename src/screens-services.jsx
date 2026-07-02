@@ -74,7 +74,7 @@ function ContextRail({ candidate, payment, slaMinutes, sections, score, scoreLiv
   );
 }
 
-function StatusTransitionPanel({ currentState, transitions, tone, history, writerNode }) {
+function StatusTransitionPanel({ currentState, transitions, tone, history, writerNode, onTransition }) {
   const [pickerOpen, setPickerOpen] = React.useState(false);
   const opts = transitions[currentState] || [];
   return (
@@ -98,7 +98,7 @@ function StatusTransitionPanel({ currentState, transitions, tone, history, write
               <div style={{ position: 'absolute', top: 32, right: 0, background: '#fff', border: '1px solid var(--border-1)', borderRadius: 8, boxShadow: 'var(--shadow-md)', zIndex: 10, minWidth: 200 }}>
                 {opts.map(o => (
                   <button key={o} className="dropdown-item" style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', border: 0, background: 'none', cursor: 'pointer', fontSize: 13, color: 'var(--fg-1)', borderBottom: '1px solid var(--border-1)' }}
-                    onClick={() => setPickerOpen(false)}>
+                    onClick={() => { if (onTransition) onTransition(o); setPickerOpen(false); }}>
                     <Pill tone={tone(o)} dot>{o}</Pill>
                   </button>
                 ))}
@@ -383,6 +383,7 @@ let t;document.getElementById('ed').addEventListener('input',()=>{document.getEl
 function RRDetailScreen({ orderId, goBack }) {
   const order = window.RR_ORDERS_FULL.find(o => o.id === orderId) || window.RR_ORDERS_FULL[0];
   const [assignedWriter, setAssignedWriter] = React.useState(order.writer || '—');
+  const [currentState, setCurrentState] = React.useState(order.state);
   const slaCritical = order.slaRemainingMin < 4 * 60;
 
   const history = [
@@ -391,7 +392,7 @@ function RRDetailScreen({ orderId, goBack }) {
   ].filter((_, i) => i < (order.writer === '—' ? 1 : 2));
 
   const versions = [
-    { v: 'v2', uploader: assignedWriter !== '—' ? assignedWriter : 'Aditi K.', when: relDate(0, 16, 0), note: 'Final pass — clarified GCC alignment in summary', isFinal: order.state === 'Delivered' },
+    { v: 'v2', uploader: assignedWriter !== '—' ? assignedWriter : 'Aditi K.', when: relDate(0, 16, 0), note: 'Final pass — clarified GCC alignment in summary', isFinal: currentState === 'Delivered' },
     { v: 'v1', uploader: assignedWriter !== '—' ? assignedWriter : 'Aditi K.', when: relDate(0, 13, 22), note: 'Initial report draft' },
   ];
 
@@ -428,7 +429,7 @@ function RRDetailScreen({ orderId, goBack }) {
         />
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <StatusTransitionPanel currentState={order.state} transitions={window.RR_TRANSITIONS} tone={window.rrStateTone} history={history}
+          <StatusTransitionPanel currentState={currentState} transitions={window.RR_TRANSITIONS} tone={window.rrStateTone} history={history} onTransition={setCurrentState}
             writerNode={<window.WriterPickerBtn value={assignedWriter} onChange={setAssignedWriter} />} />
 
           {/* Candidate's resume */}
@@ -1201,6 +1202,7 @@ function RCListScreen({ openOrder }) {
 
 function RCDetailScreen({ orderId, goBack }) {
   const order = window.RC_ORDERS_FULL.find(o => o.id === orderId) || window.RC_ORDERS_FULL[0];
+  const [currentState, setCurrentState] = React.useState(order.state);
   const slotPassed = order.slot && order.slot < new Date();
 
   const scheduleHistory = order.slot ? [
@@ -1239,7 +1241,7 @@ function RCDetailScreen({ orderId, goBack }) {
         />
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <StatusTransitionPanel currentState={order.state} transitions={window.RC_TRANSITIONS} tone={window.rcStateTone} history={history} />
+          <StatusTransitionPanel currentState={currentState} transitions={window.RC_TRANSITIONS} tone={window.rcStateTone} history={history} onTransition={setCurrentState} />
 
           {/* Scheduling panel */}
           <div className="card mb-4">
@@ -1411,6 +1413,7 @@ function MRRDetailScreen({ orderId, goBack }) {
   const [uploadedScore, setUploadedScore] = React.useState(order.rewrittenScore);
   const [showUploadModal, setShowUploadModal] = React.useState(false);
   const [assignedWriter, setAssignedWriter] = React.useState(order.writer || '—');
+  const [currentState, setCurrentState] = React.useState(order.state);
 
   const history = [
     { actor: 'System', action: 'order created', when: order.placed },
@@ -1430,7 +1433,7 @@ function MRRDetailScreen({ orderId, goBack }) {
         <div>
           <div className="flex items-center gap-3">
             <h1>{order.id}</h1>
-            <Pill tone={window.mrrStateTone(order.state)} dot>{order.state}</Pill>
+            <Pill tone={window.mrrStateTone(currentState)} dot>{currentState}</Pill>
           </div>
           <p>Manual Resume Rewrite · placed {fmtDateTime(order.placed)}</p>
         </div>
@@ -1496,43 +1499,8 @@ function MRRDetailScreen({ orderId, goBack }) {
 
         {/* Main content */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Status */}
-          <div className="card mb-4">
-            <div className="card-head">
-              <h3 className="card-title">Status & assignment</h3>
-              <span className="text-xs text-muted">{history.length} transitions</span>
-            </div>
-            <div style={{ padding: '16px 20px' }}>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs cap" style={{ color: 'var(--fg-3)' }}>Current</span>
-                  <Pill tone={window.mrrStateTone(order.state)} dot>{order.state}</Pill>
-                </div>
-                <div className="flex gap-2 items-center">
-                  <window.WriterPickerBtn value={assignedWriter} onChange={setAssignedWriter} />
-                  <button className="btn btn-primary btn-sm" disabled={!(window.MRR_TRANSITIONS[order.state]?.length)}>
-                    Move to next status <Icon name="chevron-down" size={12} />
-                  </button>
-                </div>
-              </div>
-              {history.length > 0 && (
-                <div style={{ borderTop: '1px solid var(--border-1)', paddingTop: 14 }}>
-                  <div className="text-xs cap mb-3" style={{ color: 'var(--fg-3)' }}>History</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {history.map((h, i) => (
-                      <div key={i} className="flex items-center gap-3 text-sm" style={{ padding: '8px 10px', background: 'var(--bg-alt)', borderRadius: 6 }}>
-                        <span style={{ width: 6, height: 6, borderRadius: 99, background: 'var(--primary)', flexShrink: 0 }}></span>
-                        <span className="font-semi">{h.actor}</span>
-                        <span className="text-muted">{h.action}</span>
-                        <span className="text-xs text-muted" style={{ marginLeft: 'auto' }}>{fmtDateTime(h.when)}</span>
-                        {h.reason && <span className="text-xs" style={{ background: 'var(--bg-alt)', padding: '2px 6px', borderRadius: 4 }}>{h.reason}</span>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          <StatusTransitionPanel currentState={currentState} transitions={window.MRR_TRANSITIONS} tone={window.mrrStateTone} history={history} onTransition={setCurrentState}
+            writerNode={<window.WriterPickerBtn value={assignedWriter} onChange={setAssignedWriter} />} />
 
           {/* Documents */}
           <div className="card mb-4">

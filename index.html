@@ -36539,7 +36539,7 @@ function buildMRROrders() {
   for (let i = 0; i < 18; i++) {
     const cand = window.CANDIDATES[Math.floor(r() * window.CANDIDATES.length)];
     const plan = plans[Math.floor(r() * plans.length)];
-    const state = MRR_STATES_ALL[Math.floor(r() * (MRR_STATES_ALL.length - 2))];
+    const state = MRR_STATES_ALL[Math.floor(r() * MRR_STATES_ALL.length)];
     const placed = window.relDate(Math.floor(r() * 10), 9 + Math.floor(r()*9), Math.floor(r()*60));
     const hadRR = r() < 0.45;
     const rrDiscount = hadRR ? 99 : 0;

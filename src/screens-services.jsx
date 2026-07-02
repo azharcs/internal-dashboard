@@ -74,7 +74,7 @@ function ContextRail({ candidate, payment, slaMinutes, sections, score, scoreLiv
   );
 }
 
-function StatusTransitionPanel({ currentState, transitions, tone, history }) {
+function StatusTransitionPanel({ currentState, transitions, tone, history, writerNode }) {
   const [pickerOpen, setPickerOpen] = React.useState(false);
   const opts = transitions[currentState] || [];
   return (
@@ -90,8 +90,7 @@ function StatusTransitionPanel({ currentState, transitions, tone, history }) {
             <Pill tone={tone(currentState)} dot>{currentState}</Pill>
           </div>
           <div className="flex gap-2 items-center" style={{ position: 'relative' }}>
-            <button className="btn btn-secondary btn-sm">Assign writer</button>
-            <button className="btn btn-secondary btn-sm">Assign reviewer</button>
+            {writerNode || <button className="btn btn-secondary btn-sm">Assign writer</button>}
             <button className="btn btn-primary btn-sm" disabled={!opts.length} onClick={() => setPickerOpen(!pickerOpen)}>
               Move to next status <Icon name="chevron-down" size={12} />
             </button>
@@ -226,13 +225,7 @@ function RRListScreen({ openOrder }) {
           </div>
           <h4>Writer</h4>
           <div className="filter-group">
-            {['Aditi K.','Vivek M.','Sana R.','Riya S.','Tanmay G.','Unassigned'].map(w => (
-              <label key={w} className="filter-chip"><span className="filter-chip-cb"></span><span>{w}</span></label>
-            ))}
-          </div>
-          <h4>Reviewer</h4>
-          <div className="filter-group">
-            {['Naveen K.','Priya M.','Karthik S.','Unassigned'].map(w => (
+            {[...(window.TEAM_MEMBERS || []).filter(m => m.role === 'resume_writer' && m.status === 'active').map(m => m.name), 'Unassigned'].map(w => (
               <label key={w} className="filter-chip"><span className="filter-chip-cb"></span><span>{w}</span></label>
             ))}
           </div>
@@ -283,6 +276,7 @@ function RRListScreen({ openOrder }) {
 function RRDetailScreen({ orderId, goBack }) {
   const order = window.RR_ORDERS_FULL.find(o => o.id === orderId) || window.RR_ORDERS_FULL[0];
   const [aiOpen, setAiOpen] = React.useState(true);
+  const [assignedWriter, setAssignedWriter] = React.useState(order.writer || '—');
   const slaCritical = order.slaRemainingMin < 4 * 60;
 
   const history = [
@@ -332,7 +326,8 @@ function RRDetailScreen({ orderId, goBack }) {
         />
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <StatusTransitionPanel currentState={order.state} transitions={window.RR_TRANSITIONS} tone={window.rrStateTone} history={history} />
+          <StatusTransitionPanel currentState={order.state} transitions={window.RR_TRANSITIONS} tone={window.rrStateTone} history={history}
+            writerNode={<window.WriterPickerBtn value={assignedWriter} onChange={setAssignedWriter} />} />
 
           {/* AI Draft panel */}
           <div className="card mb-4">
@@ -1298,7 +1293,7 @@ function MRRListScreen({ openOrder }) {
           </div>
           <h4>Writer</h4>
           <div className="filter-group">
-            {['Aditi K.','Vivek M.','Sana R.','Riya S.','Unassigned'].map(w => (
+            {[...(window.TEAM_MEMBERS || []).filter(m => m.role === 'resume_writer' && m.status === 'active').map(m => m.name), 'Unassigned'].map(w => (
               <label key={w} className="filter-chip"><span className="filter-chip-cb"></span><span>{w}</span></label>
             ))}
           </div>
@@ -1344,6 +1339,7 @@ function MRRDetailScreen({ orderId, goBack }) {
   const [rewrittenUploaded, setRewrittenUploaded] = React.useState(!!order.rewrittenResume);
   const [uploadedScore, setUploadedScore] = React.useState(order.rewrittenScore);
   const [showUploadModal, setShowUploadModal] = React.useState(false);
+  const [assignedWriter, setAssignedWriter] = React.useState(order.writer || '—');
 
   const history = [
     { actor: 'System', action: 'order created', when: order.placed },
@@ -1464,9 +1460,8 @@ function MRRDetailScreen({ orderId, goBack }) {
                   <span className="text-xs cap" style={{ color: 'var(--fg-3)' }}>Current</span>
                   <Pill tone={window.mrrStateTone(order.state)} dot>{order.state}</Pill>
                 </div>
-                <div className="flex gap-2">
-                  <button className="btn btn-secondary btn-sm">Assign writer</button>
-                  <button className="btn btn-secondary btn-sm">Assign reviewer</button>
+                <div className="flex gap-2 items-center">
+                  <window.WriterPickerBtn value={assignedWriter} onChange={setAssignedWriter} />
                   <button className="btn btn-primary btn-sm" disabled={!(window.MRR_TRANSITIONS[order.state]?.length)}>
                     Move to next status <Icon name="chevron-down" size={12} />
                   </button>

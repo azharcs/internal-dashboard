@@ -40957,11 +40957,9 @@ function RCDetailScreen({ orderId, goBack }) {
 
 function MRRListScreen({ openOrder }) {
   const [stateFilter, setStateFilter] = React.useState([]);
-  const [planFilter, setPlanFilter] = React.useState([]);
   const orders = window.MRR_ORDERS;
   let filtered = orders;
   if (stateFilter.length) filtered = filtered.filter(o => stateFilter.includes(o.state));
-  if (planFilter.length) filtered = filtered.filter(o => planFilter.includes(o.plan.key));
 
   const counts = {};
   window.MRR_STATES_ALL.forEach(s => counts[s] = orders.filter(o => o.state === s).length);
@@ -40969,7 +40967,7 @@ function MRRListScreen({ openOrder }) {
 
   return (
     <div className="page">
-      <ServicePageHead code="MRR" title="Manual Resume Rewrite" sub="Manual delivery · Resume Pro ₹2,300 · Resume Package ₹2,800"
+      <ServicePageHead code="MRR" title="Manual Resume Rewrite" sub="Manual delivery"
         actions={<>
           <button className="btn btn-secondary"><Icon name="bookmark" /> Saved view</button>
           <button className="btn btn-primary"><Icon name="download" /> Download CSV</button>
@@ -40983,15 +40981,8 @@ function MRRListScreen({ openOrder }) {
       </div>
 
       <div className="list-layout">
-        <FilterRail onClear={() => { setStateFilter([]); setPlanFilter([]); }}>
+        <FilterRail onClear={() => setStateFilter([])}>
           <FilterGroup title="Status" options={window.MRR_STATES_ALL} selected={stateFilter} onToggle={v => setStateFilter(s => s.includes(v) ? s.filter(x => x !== v) : [...s, v])} counts={counts} />
-          <h4>Plan</h4>
-          <div className="filter-group">
-            {[{value:'pro',label:'Resume Pro'},{ value:'package',label:'Resume Package'}].map(o => {
-              const on = planFilter.includes(o.value);
-              return <label key={o.value} className={`filter-chip ${on ? 'is-on' : ''}`} onClick={() => setPlanFilter(s => s.includes(o.value) ? s.filter(x => x !== o.value) : [...s, o.value])}><span className="filter-chip-cb">{on && <Icon name="check" size={9} />}</span><span>{o.label}</span></label>;
-            })}
-          </div>
           <h4>Writer</h4>
           <div className="filter-group">
             {[...(window.TEAM_MEMBERS || []).filter(m => m.role === 'resume_writer' && m.status === 'active').map(m => m.name), 'Unassigned'].map(w => (
@@ -41009,7 +41000,7 @@ function MRRListScreen({ openOrder }) {
           </div>
           <table className="tbl">
             <thead><tr>
-              <th>Order</th><th>Candidate</th><th>Plan</th><th>Status</th>
+              <th>Order</th><th>Candidate</th><th>Status</th>
               <th>Writer</th><th>Score (before)</th><th>Score (after)</th><th>Paid</th><th>RR Discount</th><th></th>
             </tr></thead>
             <tbody>
@@ -41017,7 +41008,6 @@ function MRRListScreen({ openOrder }) {
                 <tr key={o.id} onClick={() => openOrder && openOrder(o.id)} style={{ cursor: 'pointer' }}>
                   <td className="tnum text-muted">{o.id}</td>
                   <td><div className="av-row"><Avatar initials={o.candidate.avatarInitials} /><div><div className="n">{o.candidate.name}</div><div className="e">{o.candidate.email}</div></div></div></td>
-                  <td><span style={{ fontSize: 11, fontWeight: 600, color: o.plan.key === 'package' ? 'var(--violet-strong)' : 'var(--primary-800)', background: o.plan.key === 'package' ? 'var(--violet-soft)' : 'var(--primary-50)', padding: '2px 8px', borderRadius: 4 }}>{o.plan.label}</span></td>
                   <td><Pill tone={window.mrrStateTone(o.state)} dot>{o.state}</Pill></td>
                   <td className="text-sm text-muted">{o.writer}</td>
                   <td><ScoreBadge value={o.originalScore} /></td>
@@ -41049,8 +41039,6 @@ function MRRDetailScreen({ orderId, goBack }) {
     ...(order.rewrittenResume ? [{ actor: order.writer, action: 'uploaded rewritten resume', when: order.rewrittenResume.uploadedAt }] : []),
   ].filter(h => h.when);
 
-  const planColor = order.plan.key === 'package' ? { bg: 'var(--violet-soft)', fg: 'var(--violet-strong)' } : { bg: 'var(--primary-50)', fg: 'var(--primary-800)' };
-
   return (
     <div className="page">
       <div className="flex items-center gap-2 mb-3 text-sm" style={{ color: 'var(--fg-3)' }}>
@@ -41063,7 +41051,6 @@ function MRRDetailScreen({ orderId, goBack }) {
           <div className="flex items-center gap-3">
             <h1>{order.id}</h1>
             <Pill tone={window.mrrStateTone(order.state)} dot>{order.state}</Pill>
-            <span style={{ fontSize: 11, fontWeight: 600, color: planColor.fg, background: planColor.bg, padding: '2px 10px', borderRadius: 4 }}>{order.plan.label}</span>
           </div>
           <p>Manual Resume Rewrite · placed {fmtDateTime(order.placed)}</p>
         </div>
@@ -41100,26 +41087,9 @@ function MRRDetailScreen({ orderId, goBack }) {
               </div>
             </div>
 
-            {/* Plan */}
-            <div className="cand-rail-section" style={{ borderTop: '1px solid var(--border-1)' }}>
-              <div className="text-xs cap mb-2" style={{ color: 'var(--fg-3)' }}>Plan</div>
-              <div style={{ fontWeight: 700, fontSize: 14, color: planColor.fg, marginBottom: 8 }}>{order.plan.label}</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {order.plan.services.map(s => (
-                  <div key={s} className="flex items-center gap-2 text-xs" style={{ color: 'var(--fg-2)' }}>
-                    <Icon name="check" size={11} style={{ stroke: 'var(--green-strong)', flexShrink: 0 }} />{s}
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Payment */}
             <div className="cand-rail-section" style={{ borderTop: '1px solid var(--border-1)' }}>
               <div className="text-xs cap mb-2" style={{ color: 'var(--fg-3)' }}>Payment</div>
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-xs text-muted">Plan price</span>
-                <span className="font-semi text-sm tnum">{fmtINR(order.plan.price)}</span>
-              </div>
               {order.rrDiscount > 0 && (
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-xs text-muted">RR discount</span>
@@ -41238,22 +41208,12 @@ function MRRDetailScreen({ orderId, goBack }) {
                 )}
               </div>
 
-              {/* Cover letter (Package only) */}
-              {order.plan.key === 'package' && (
-                <div>
-                  <div className="text-xs cap mb-2" style={{ color: 'var(--fg-3)' }}>Cover letter</div>
-                  <div style={{ padding: '12px 14px', background: 'var(--bg-alt)', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <Icon name="info" size={14} style={{ stroke: 'var(--primary)' }} />
-                    <span className="text-sm" style={{ color: 'var(--fg-2)' }}>Cover letter is manually created and sent directly by the recruiter. No upload required here.</span>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
           <NotesPanel />
           <ActivityLogPanel events={[
-            { icon: 'card', tone: 'violet', when: order.placed, text: `Order placed · ${order.plan.label}`, meta: [fmtINR(order.amountPaid), order.rrDiscount > 0 ? `RR discount -₹99 applied` : null, order.coupon ? `Coupon ${order.coupon}` : null].filter(Boolean) },
+            { icon: 'card', tone: 'violet', when: order.placed, text: 'Order placed', meta: [fmtINR(order.amountPaid), order.rrDiscount > 0 ? `RR discount -₹99 applied` : null, order.coupon ? `Coupon ${order.coupon}` : null].filter(Boolean) },
             ...(order.originalResume ? [{ icon: 'upload', tone: 'blue', when: order.originalResume.uploadedAt, text: 'Candidate uploaded original resume', meta: [`Score: ${order.originalScore}`] }] : []),
             ...(order.writer !== '—' ? [{ icon: 'user', tone: 'green', when: relDate(0, 10, 0), text: `Writer assigned: ${order.writer}`, meta: [] }] : []),
             ...(order.rewrittenResume ? [{ icon: 'file', tone: 'green', when: order.rewrittenResume.uploadedAt, text: 'Rewritten resume uploaded', meta: [`Score: ${uploadedScore}`] }] : []),

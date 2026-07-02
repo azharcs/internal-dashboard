@@ -27,7 +27,7 @@ function DropoffsScreen({ go }) {
     <div className="page">
       <PageHead title="Drop-offs" sub="Where candidates pause across all five services. Build cohorts, generate codes, hand off to outreach."
         actions={<>
-          <button className="btn btn-secondary"><Icon name="bookmark" /> Saved view</button>
+
           <button className="btn btn-primary" onClick={() => go && go({ id: 'cohort-export' })}><Icon name="download" /> Export cohort</button>
         </>} />
 
@@ -112,7 +112,7 @@ function DropoffsScreen({ go }) {
         <div className="table-wrap">
           <div className="table-toolbar">
             <div className="left">
-              <button className="saved-views-btn"><Icon name="bookmark" size={12} /> All drop-offs <Icon name="chevron-down" size={12} /></button>
+
               <span className="text-xs text-muted">{filtered.length} of {allDrops.length}</span>
             </div>
             <button className="btn btn-violet-ghost btn-sm" onClick={() => go && go({ id: 'cohort-export' })}><Icon name="plus" /> Build cohort</button>

@@ -38,7 +38,7 @@ function RRScreen() {
     <div className="page">
       <PageHead title="Resume Report" sub="Manual delivery · ₹99 flat · 48-hour SLA"
         actions={<>
-          <button className="btn btn-secondary"><window.Icon name="filter" /> Saved view</button>
+
           <button className="btn btn-primary"><window.Icon name="download" /> Download CSV</button>
         </>} />
 
@@ -80,7 +80,7 @@ function RRScreen() {
         <div className="table-wrap">
           <div className="table-toolbar">
             <div className="left">
-              <button className="saved-views-btn"><window.Icon name="bookmark" size={12} /> Open queue <window.Icon name="chevron-down" size={12} /></button>
+
               <span className="text-xs text-muted">{filtered.length} orders</span>
             </div>
           </div>
@@ -280,7 +280,7 @@ function DropoffsScreen() {
         <div className="table-wrap">
           <div className="table-toolbar">
             <div className="left">
-              <button className="saved-views-btn"><window.Icon name="bookmark" size={12} /> All drop-offs <window.Icon name="chevron-down" size={12} /></button>
+
               <span className="text-xs text-muted">{window.DROPOFFS.length} drops</span>
             </div>
             <button className="btn btn-violet-ghost btn-sm"><window.Icon name="plus" /> Build cohort</button>

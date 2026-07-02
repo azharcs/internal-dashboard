@@ -202,7 +202,7 @@ function RRListScreen({ openOrder }) {
     <div className="page">
       <ServicePageHead code="RR" title="Resume Report" sub="Manual delivery · ₹99 · 48-hour SLA"
         actions={<>
-          <button className="btn btn-secondary"><Icon name="bookmark" /> Saved view</button>
+
           <button className="btn btn-primary"><Icon name="download" /> Download CSV</button>
         </>} />
 
@@ -234,7 +234,7 @@ function RRListScreen({ openOrder }) {
         <div className="table-wrap">
           <div className="table-toolbar">
             <div className="left">
-              <button className="saved-views-btn"><Icon name="bookmark" size={12} /> All orders <Icon name="chevron-down" size={12} /></button>
+
               <span className="text-xs text-muted">{filtered.length} of {orders.length}</span>
             </div>
           </div>
@@ -574,7 +574,7 @@ function RBListScreen({ openSession }) {
         <div className="table-wrap">
           <div className="table-toolbar">
             <div className="left">
-              <button className="saved-views-btn"><Icon name="bookmark" size={12} /> All sessions <Icon name="chevron-down" size={12} /></button>
+
               <span className="text-xs text-muted">{sessions.length} sessions</span>
               <span className="live-pulse" style={{ marginLeft: 8 }}>● 4 live editors</span>
             </div>
@@ -804,7 +804,7 @@ function LOListScreen({ openSession }) {
         <div className="table-wrap">
           <div className="table-toolbar">
             <div className="left">
-              <button className="saved-views-btn"><Icon name="bookmark" size={12} /> All sessions <Icon name="chevron-down" size={12} /></button>
+
               <span className="text-xs text-muted">{sessions.length} sessions</span>
             </div>
           </div>
@@ -971,7 +971,7 @@ function IIQListScreen({ openSession }) {
         <div className="table-wrap">
           <div className="table-toolbar">
             <div className="left">
-              <button className="saved-views-btn"><Icon name="bookmark" size={12} /> All sessions <Icon name="chevron-down" size={12} /></button>
+
               <span className="text-xs text-muted">{sessions.length} sessions</span>
             </div>
           </div>
@@ -1170,7 +1170,7 @@ function RCListScreen({ openOrder }) {
         <div className="table-wrap">
           <div className="table-toolbar">
             <div className="left">
-              <button className="saved-views-btn"><Icon name="bookmark" size={12} /> All orders <Icon name="chevron-down" size={12} /></button>
+
               <span className="text-xs text-muted">{orders.length} orders</span>
             </div>
           </div>
@@ -1349,7 +1349,7 @@ function MRRListScreen({ openOrder }) {
     <div className="page">
       <ServicePageHead code="MRR" title="Manual Resume Rewrite" sub="Manual delivery"
         actions={<>
-          <button className="btn btn-secondary"><Icon name="bookmark" /> Saved view</button>
+
           <button className="btn btn-primary"><Icon name="download" /> Download CSV</button>
         </>} />
 
@@ -1374,7 +1374,7 @@ function MRRListScreen({ openOrder }) {
         <div className="table-wrap">
           <div className="table-toolbar">
             <div className="left">
-              <button className="saved-views-btn"><Icon name="bookmark" size={12} /> All orders <Icon name="chevron-down" size={12} /></button>
+
               <span className="text-xs text-muted">{filtered.length} of {orders.length}</span>
             </div>
           </div>

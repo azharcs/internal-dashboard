@@ -10,8 +10,6 @@ function CandidatesScreen({ openCandidate, search }) {
     drops: 'all',
   });
   const [sort, setSort] = React.useState({ key: 'lastActive', dir: 'desc' });
-  const [savedView, setSavedView] = React.useState('All candidates');
-  const [savedViewOpen, setSavedViewOpen] = React.useState(false);
 
   const toggle = (key, val) => {
     setFilters(f => ({ ...f, [key]: f[key].includes(val) ? f[key].filter(v => v !== val) : [...f[key], val] }));
@@ -126,25 +124,6 @@ function CandidatesScreen({ openCandidate, search }) {
         <div className="table-wrap">
           <div className="table-toolbar">
             <div className="left">
-              <div className="saved-views">
-                <button className="saved-views-btn" onClick={() => setSavedViewOpen(v => !v)}>
-                  <window.Icon name="bookmark" size={12} />
-                  {savedView}
-                  <window.Icon name="chevron-down" size={12} />
-                </button>
-                {savedViewOpen && (
-                  <div style={{ position: 'absolute', top: 36, left: 0, background: '#fff', border: '1px solid var(--border-1)', borderRadius: 8, boxShadow: 'var(--shadow-3)', minWidth: 220, zIndex: 20, padding: 6 }}>
-                    {['All candidates','Active paid users','High-score (>70)','Open drop-offs','Dormant ≥ 30d','New this week'].map(v => (
-                      <button key={v} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '7px 10px', borderRadius: 6, fontSize: 13, border: 0, background: v === savedView ? 'var(--primary-50)' : 'transparent', color: v === savedView ? 'var(--primary-700)' : 'var(--fg-1)', cursor: 'pointer', fontWeight: v === savedView ? 600 : 400 }} onClick={() => { setSavedView(v); setSavedViewOpen(false); }}>
-                        {v}
-                      </button>
-                    ))}
-                    <div style={{ height: 1, background: 'var(--border-1)', margin: '4px 0' }}></div>
-                    <button style={{ display: 'block', width: '100%', textAlign: 'left', padding: '7px 10px', borderRadius: 6, fontSize: 13, border: 0, background: 'transparent', color: 'var(--primary)', cursor: 'pointer', fontWeight: 500 }}>+ Save current view…</button>
-                  </div>
-                )}
-              </div>
-              <div style={{ width: 1, height: 20, background: 'var(--border-1)' }}></div>
               <span className="text-xs text-muted">{rows.length} results</span>
             </div>
           </div>

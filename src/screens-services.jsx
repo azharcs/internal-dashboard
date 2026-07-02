@@ -273,23 +273,134 @@ function RRListScreen({ openOrder }) {
   );
 }
 
+function openReportEditor(order) {
+  const c = order.candidate;
+  const dateStr = new Date(order.placed).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${c.name} — Resume Report</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F4F5F7;color:#1D2B3A;font-size:14px;height:100vh;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:52px;background:#fff;border-bottom:1px solid #E0E4EA;flex-shrink:0;gap:12px}
+.topbar-left{display:flex;align-items:center;gap:10px;min-width:0}
+.topbar-title{font-size:14px;font-weight:600;color:#1D2B3A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-meta{font-size:11px;color:#8896A5;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:background .12s;font-family:inherit}
+.btn-primary{background:#0052CC;color:#fff}.btn-primary:hover{background:#0065FF}
+.btn-secondary{background:#F4F5F7;color:#344563;border:1px solid #DDE3EA}.btn-secondary:hover{background:#EBECF0}
+.save-status{font-size:12px;color:#8896A5}
+.toolbar{display:flex;align-items:center;gap:2px;padding:6px 20px;background:#fff;border-bottom:1px solid #E0E4EA;flex-shrink:0;flex-wrap:wrap}
+.toolbar-sep{width:1px;height:20px;background:#DDE3EA;margin:0 4px}
+.tb-btn{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 6px;border:none;background:transparent;border-radius:4px;cursor:pointer;font-size:12px;color:#344563;font-family:inherit;font-weight:600;transition:background .1s}
+.tb-btn:hover{background:#EBECF0}
+.editor-wrap{flex:1;overflow-y:auto;display:flex;justify-content:center;padding:32px 20px 80px}
+.editor-paper{background:#fff;width:100%;max-width:760px;min-height:900px;padding:56px 64px;box-shadow:0 1px 4px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);border-radius:4px;outline:none;font-size:14px;line-height:1.75;color:#1D2B3A}
+.editor-paper h1{font-size:24px;font-weight:700;color:#0052CC;margin-bottom:8px}
+.editor-paper h2{font-size:16px;font-weight:600;color:#1D2B3A;margin:24px 0 8px;padding-bottom:6px;border-bottom:1px solid #E0E4EA}
+.editor-paper h3{font-size:14px;font-weight:600;color:#344563;margin:16px 0 6px}
+.editor-paper p{margin-bottom:10px}
+.editor-paper ul,.editor-paper ol{margin:8px 0 10px 22px}
+.editor-paper li{margin-bottom:4px}
+.editor-paper hr{border:none;border-top:1px solid #E0E4EA;margin:20px 0}
+.meta-band{background:#F4F7FF;border:1px solid #DEEBFF;border-radius:6px;padding:10px 16px;margin-bottom:24px;display:flex;gap:24px;flex-wrap:wrap}
+.meta-band .lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8896A5;display:block;margin-bottom:2px}
+.meta-band .val{font-size:13px;font-weight:600;color:#1D2B3A}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-left">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="1" width="14" height="16" rx="2" stroke="#0052CC" stroke-width="1.5"/><path d="M5 6h8M5 9h8M5 12h5" stroke="#0052CC" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <div>
+      <div class="topbar-title">${c.name} — Resume Report</div>
+      <div class="topbar-meta">Order ${order.id} &nbsp;·&nbsp; Score: ${order.score}/100</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="save-status" id="ss"></span>
+    <button class="btn btn-secondary" onclick="window.close()">Close</button>
+    <button class="btn btn-primary" onclick="saveDraft()">Save draft</button>
+  </div>
+</div>
+<div class="toolbar">
+  <button class="tb-btn" onclick="ex('bold')" title="Bold"><b>B</b></button>
+  <button class="tb-btn" onclick="ex('italic')" title="Italic"><i>I</i></button>
+  <button class="tb-btn" onclick="ex('underline')" title="Underline"><u>U</u></button>
+  <div class="toolbar-sep"></div>
+  <button class="tb-btn" onclick="blk('h1')">H1</button>
+  <button class="tb-btn" onclick="blk('h2')">H2</button>
+  <button class="tb-btn" onclick="blk('h3')">H3</button>
+  <button class="tb-btn" onclick="blk('p')" style="font-weight:400">¶</button>
+  <div class="toolbar-sep"></div>
+  <button class="tb-btn" onclick="ex('insertUnorderedList')" title="Bullet list">• list</button>
+  <button class="tb-btn" onclick="ex('insertOrderedList')" title="Numbered list">1. list</button>
+  <div class="toolbar-sep"></div>
+  <button class="tb-btn" onclick="ex('insertHorizontalRule')">— rule</button>
+  <div class="toolbar-sep"></div>
+  <button class="tb-btn" onclick="ex('undo')">↩</button>
+  <button class="tb-btn" onclick="ex('redo')">↪</button>
+</div>
+<div class="editor-wrap">
+  <div class="editor-paper" id="ed" contenteditable="true" spellcheck="true">
+    <h1>${c.name}</h1>
+    <div class="meta-band">
+      <div><span class="lbl">Order ID</span><span class="val">${order.id}</span></div>
+      <div><span class="lbl">Date</span><span class="val">${dateStr}</span></div>
+      <div><span class="lbl">Score</span><span class="val">${order.score} / 100</span></div>
+      <div><span class="lbl">Email</span><span class="val">${c.email}</span></div>
+    </div>
+    <h2>Executive Summary</h2>
+    <p>Write an overall assessment of the candidate's resume here. Summarise their profile, experience level, and key highlights in 2–3 sentences.</p>
+    <h2>Strengths</h2>
+    <ul><li>Strong experience in...</li><li>Clear career progression in...</li><li>Well-structured presentation of...</li></ul>
+    <h2>Areas for Improvement</h2>
+    <ul><li>Quantify achievements in the experience section — add metrics where possible.</li><li>The summary section needs to be more targeted to the candidate's goal role.</li><li>Consider adding a skills section with relevant tools and technologies.</li></ul>
+    <h2>Recommendations</h2>
+    <p>Provide 2–3 specific, actionable recommendations the candidate can act on immediately to improve their resume and job prospects.</p>
+    <h2>Score Breakdown</h2>
+    <ul>
+      <li><strong>Content quality:</strong> — / 25</li>
+      <li><strong>Structure &amp; formatting:</strong> — / 25</li>
+      <li><strong>Keyword relevance:</strong> — / 25</li>
+      <li><strong>Overall impression:</strong> — / 25</li>
+    </ul>
+    <p><strong>Total: ${order.score} / 100</strong></p>
+    <hr>
+    <p style="font-size:12px;color:#8896A5">Prepared by Talent500 Candidate Services &nbsp;·&nbsp; ${dateStr}</p>
+  </div>
+</div>
+<script>
+function ex(cmd){document.getElementById('ed').focus();document.execCommand(cmd,false,null)}
+function blk(tag){document.getElementById('ed').focus();document.execCommand('formatBlock',false,tag)}
+function saveDraft(){
+  const blob=new Blob(['<!DOCTYPE html><html><head><meta charset="utf-8"><title>Resume Report</title><style>body{font-family:sans-serif;max-width:760px;margin:40px auto;padding:0 20px;line-height:1.75;color:#1D2B3A}h1{color:#0052CC}h2{border-bottom:1px solid #eee;padding-bottom:6px;margin-top:24px}ul{margin-left:20px}</style></head><body>'+document.getElementById('ed').innerHTML+'</body></html>'],{type:'text/html'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='resume-report-${order.id}.html';a.click();
+  document.getElementById('ss').textContent='Draft saved';setTimeout(()=>document.getElementById('ss').textContent='',2000)
+}
+let t;document.getElementById('ed').addEventListener('input',()=>{document.getElementById('ss').textContent='Unsaved';clearTimeout(t);t=setTimeout(()=>document.getElementById('ss').textContent='',4000)})
+</script>
+</body></html>`;
+  const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+  window.open(url, '_blank');
+}
+
 function RRDetailScreen({ orderId, goBack }) {
   const order = window.RR_ORDERS_FULL.find(o => o.id === orderId) || window.RR_ORDERS_FULL[0];
-  const [aiOpen, setAiOpen] = React.useState(true);
   const [assignedWriter, setAssignedWriter] = React.useState(order.writer || '—');
   const slaCritical = order.slaRemainingMin < 4 * 60;
 
   const history = [
     { actor: 'System', action: 'created order', when: order.placed },
-    { actor: 'System', action: 'AI draft generated', when: relDate(0, 9, 12), reason: 'gpt-resume-v3.2' },
-    { actor: 'Sushant V.', action: 'assigned writer Aditi K.', when: relDate(0, 10, 5), reason: 'Round-robin' },
-    { actor: 'Aditi K.', action: 'assigned reviewer Naveen K.', when: relDate(0, 14, 8) },
-  ].filter((_, i) => i < (order.writer === '—' ? 1 : order.reviewer === '—' ? 3 : 4));
+    { actor: 'Sushant V.', action: `assigned writer ${order.writer}`, when: relDate(0, 10, 5), reason: 'Manual' },
+  ].filter((_, i) => i < (order.writer === '—' ? 1 : 2));
 
   const versions = [
-    { v: 'v3', uploader: 'Aditi K.', when: relDate(0, 16, 0), note: 'Final pass — clarified GCC alignment in summary', isFinal: order.state === 'Closed' },
-    { v: 'v2', uploader: 'Aditi K.', when: relDate(0, 13, 22), note: 'Tightened bullets in last 2 roles' },
-    { v: 'v1', uploader: 'AI', when: relDate(0, 9, 12) },
+    { v: 'v2', uploader: assignedWriter !== '—' ? assignedWriter : 'Aditi K.', when: relDate(0, 16, 0), note: 'Final pass — clarified GCC alignment in summary', isFinal: order.state === 'Closed' },
+    { v: 'v1', uploader: assignedWriter !== '—' ? assignedWriter : 'Aditi K.', when: relDate(0, 13, 22), note: 'Initial report draft' },
   ];
 
   return (
@@ -329,69 +440,75 @@ function RRDetailScreen({ orderId, goBack }) {
           <StatusTransitionPanel currentState={order.state} transitions={window.RR_TRANSITIONS} tone={window.rrStateTone} history={history}
             writerNode={<window.WriterPickerBtn value={assignedWriter} onChange={setAssignedWriter} />} />
 
-          {/* AI Draft panel */}
+          {/* Candidate's resume */}
           <div className="card mb-4">
-            <div className="card-head" style={{ cursor: 'pointer' }} onClick={() => setAiOpen(!aiOpen)}>
-              <div className="flex items-center gap-2">
-                <Icon name={aiOpen ? 'chevron-down' : 'chevron-right'} size={14} />
-                <h3 className="card-title">AI draft</h3>
-                <Pill tone={order.aiDraftState === 'failed' ? 'red' : order.aiDraftState === 'generating' ? 'violet' : 'green'} dot>
-                  {order.aiDraftState === 'ready' ? 'Ready' : order.aiDraftState === 'generating' ? 'Generating' : order.aiDraftState === 'failed' ? 'Failed' : 'Pending'}
-                </Pill>
-              </div>
-              <div className="flex items-center gap-3 text-xs text-muted">
-                <span style={{ fontFamily: 'var(--font-mono)' }}>{order.aiModel}</span>
-                <span>{fmtDateTime(order.aiGeneratedAt)}</span>
-                <button className="btn btn-ghost btn-sm" onClick={e => e.stopPropagation()}><Icon name="refresh" size={12} /> Regenerate</button>
+            <div className="card-head">
+              <h3 className="card-title">Candidate's resume</h3>
+              <div className="flex items-center gap-3">
+                <ScoreBadge value={order.score} />
+                <button className="btn btn-ghost btn-sm"><Icon name="download" size={12} /> Download</button>
+                <button className="btn btn-ghost btn-sm"><Icon name="external" size={12} /> Open PDF</button>
               </div>
             </div>
-            {aiOpen && (
-              <div style={{ padding: '0 20px 18px', fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--fg-2)', lineHeight: 1.6 }}>
-                <div style={{ background: 'var(--bg-alt)', padding: 16, borderRadius: 8, border: '1px solid var(--border-1)' }}>
-                  <div style={{ fontWeight: 600, color: 'var(--fg-1)', fontSize: 14, marginBottom: 4 }}>{order.candidate.name}</div>
-                  <div style={{ fontSize: 12, marginBottom: 10 }}>{order.candidate.role} · {order.candidate.city}</div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg-3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Summary</div>
-                  <p style={{ marginBottom: 10 }}>Results-driven {order.candidate.role} with 6+ years building large-scale systems for global product teams. Track record of shipping production services that handle millions of requests/day, with deep ownership across the stack.</p>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg-3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Top experience</div>
-                  <p>Led migration of monolithic billing service to event-driven architecture (Kafka + Postgres), reducing p99 latency by 40% and unlocking horizontal scale. Mentored 4 engineers, partnered with PM and design on quarterly roadmaps.</p>
+            <div style={{ padding: 20, display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+              {/* PDF thumbnail mockup */}
+              <div style={{ width: 110, height: 148, background: 'linear-gradient(180deg,#fff 0%,#f5f5f7 100%)', border: '1px solid var(--border-1)', borderRadius: 6, flexShrink: 0, display: 'flex', flexDirection: 'column', padding: '14px 10px', gap: 6, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                <div style={{ height: 8, width: '60%', background: '#1D2B3A', opacity: 0.8, borderRadius: 2 }}></div>
+                <div style={{ height: 5, width: '80%', background: 'var(--border-2)', borderRadius: 2 }}></div>
+                <div style={{ height: 5, width: '70%', background: 'var(--border-2)', borderRadius: 2, marginBottom: 6 }}></div>
+                {[90,75,85,65,80,70,75].map((w, i) => <div key={i} style={{ height: 3, width: w+'%', background: 'var(--border-1)', borderRadius: 2 }}></div>)}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="font-semi text-sm" style={{ marginBottom: 4 }}>{order.candidate.name.replace(/\s+/g, '_')}_resume.pdf</div>
+                <div className="text-xs text-muted" style={{ marginBottom: 2 }}>Uploaded by candidate &nbsp;·&nbsp; {fmtDateTime(order.placed)}</div>
+                <div className="text-xs text-muted" style={{ marginBottom: 12 }}>312 KB · 2 pages</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'var(--bg-alt)', borderRadius: 6, width: 'fit-content' }}>
+                  <span className="text-xs text-muted">Resume score</span>
+                  <ScoreBadge value={order.score} />
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Report */}
+          <div className="card mb-4">
+            <div className="card-head">
+              <div>
+                <h3 className="card-title">Report <span className="count">{order.state === 'New' || order.state === 'Resume Received' ? 0 : versions.length}</span></h3>
+                <p className="card-sub" style={{ fontSize: 11, color: 'var(--fg-3)', marginTop: 2 }}>Written by the assigned writer in the report editor.</p>
+              </div>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => openReportEditor(order)}
+                disabled={order.state === 'New'}
+                title={order.state === 'New' ? 'Awaiting resume upload from candidate' : 'Open report editor in a new tab'}>
+                <Icon name="external" size={13} /> Create a Report
+              </button>
+            </div>
+
+            {(order.state === 'New' || order.state === 'Resume Received') ? (
+              <div style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Icon name="clock" size={14} style={{ stroke: 'var(--fg-3)' }} />
+                <span className="text-sm text-muted">
+                  {order.state === 'New' ? 'Waiting for candidate to upload resume before report can be started.' : 'Resume received. Writer can now create the report.'}
+                </span>
+              </div>
+            ) : (
+              <div style={{ padding: '8px 0' }}>
+                {versions.map((v, i) => (
+                  <div key={i} className="flex items-center gap-3" style={{ padding: '12px 20px', borderBottom: i === versions.length - 1 ? 'none' : '1px solid var(--border-1)' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--primary-800)', background: 'var(--primary-50)', padding: '3px 8px', borderRadius: 4 }}>{v.v}</span>
+                    <div style={{ flex: 1 }}>
+                      <div className="font-semi text-sm">Created by {v.uploader}</div>
+                      {v.note && <div className="text-xs text-muted">{v.note}</div>}
+                    </div>
+                    <span className="text-xs text-muted">{fmtDateTime(v.when)}</span>
+                    <button className="btn btn-ghost btn-sm" onClick={() => openReportEditor(order)}><Icon name="external" size={12} /> Edit</button>
+                    {v.isFinal ? <Pill tone="green" dot>Final</Pill> : <button className="btn btn-ghost btn-sm">Mark as final</button>}
+                  </div>
+                ))}
               </div>
             )}
-          </div>
-
-          {/* Source resume */}
-          <div className="card mb-4">
-            <div className="card-head"><h3 className="card-title">Source resume</h3>
-              <div className="flex items-center gap-3"><ScoreBadge value={order.score} /><button className="btn btn-ghost btn-sm"><Icon name="external" size={12} /> Open PDF</button></div>
-            </div>
-            <div style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 100, height: 130, background: 'linear-gradient(180deg,#fff,#f5f5f7)', border: '1px solid var(--border-1)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name="file" size={28} style={{ stroke: 'var(--fg-4)' }} />
-              </div>
-              <div>
-                <div className="font-semi text-sm">{order.candidate.name.replace(/\s+/g, '_')}_resume_v1.pdf</div>
-                <div className="text-xs text-muted">Uploaded by candidate · {fmtDateTime(order.placed)}</div>
-                <div className="text-xs text-muted">312 KB · 2 pages</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Final report versions */}
-          <div className="card mb-4">
-            <div className="card-head"><h3 className="card-title">Final report</h3><span className="text-xs text-muted">{versions.length} versions</span></div>
-            <div style={{ padding: '8px 0' }}>
-              {versions.map((v, i) => (
-                <div key={i} className="flex items-center gap-3" style={{ padding: '12px 20px', borderBottom: i === versions.length - 1 ? 'none' : '1px solid var(--border-1)' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--primary-800)', background: 'var(--primary-50)', padding: '3px 8px', borderRadius: 4 }}>{v.v}</span>
-                  <div style={{ flex: 1 }}>
-                    <div className="font-semi text-sm">{v.uploader === 'AI' ? 'AI generated' : `Uploaded by ${v.uploader}`}</div>
-                    {v.note && <div className="text-xs text-muted">{v.note}</div>}
-                  </div>
-                  <span className="text-xs text-muted">{fmtDateTime(v.when)}</span>
-                  {v.isFinal ? <Pill tone="green" dot>Final</Pill> : <button className="btn btn-ghost btn-sm">Mark as final</button>}
-                </div>
-              ))}
-            </div>
             {order.state === 'Ready for Delivery' && (
               <div style={{ padding: '12px 20px', background: 'var(--primary-50)', borderTop: '1px solid var(--border-1)', display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Icon name="info" size={14} style={{ stroke: 'var(--primary)' }} />
@@ -403,10 +520,10 @@ function RRDetailScreen({ orderId, goBack }) {
           <NotesPanel />
           <ActivityLogPanel events={[
             { icon: 'card', tone: 'violet', when: order.placed, text: 'Order placed', meta: [fmtINR(order.amountPaid), order.coupon ? `Coupon ${order.coupon}` : null].filter(Boolean) },
-            { icon: 'sparkles', tone: 'violet', when: relDate(0, 9, 12), text: 'AI draft generated', meta: [order.aiModel, '1.4s'] },
-            { icon: 'user', tone: 'green', when: relDate(0, 14, 8), text: 'Reviewer assigned: ' + (order.reviewer === '—' ? 'pending' : order.reviewer), meta: [] },
+            { icon: 'upload', tone: 'blue', when: relDate(0, 9, 0), text: 'Resume uploaded by candidate', meta: ['312 KB'] },
+            { icon: 'user', tone: 'green', when: relDate(0, 10, 5), text: 'Writer assigned: ' + (assignedWriter !== '—' ? assignedWriter : 'pending'), meta: [] },
             { icon: 'pulse', tone: 'blue', when: relDate(0, 15, 30), text: 'Status: ' + order.state, meta: [] },
-          ]} />
+          ].filter((_, i) => i < (order.state === 'New' ? 1 : 4))} />
         </div>
       </div>
     </div>

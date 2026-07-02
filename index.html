@@ -36403,11 +36403,13 @@ function buildRROrdersFull() {
     const writer = ['New','Cancelled'].includes(state) ? '—' : writers[1 + Math.floor(r()*3)];
     const coupon = coupons[Math.floor(r() * coupons.length)];
     const amountPaid = coupon === 'RR99FREE' ? 49 : coupon === 'WELCOME99' ? 0 : 99;
+    const hasResume = state !== 'New';
+    const originalResume = hasResume ? { name: `${cand.name.split(' ')[0]}_Resume.pdf`, uploadedAt: placed } : null;
     list.push({
       id: 'RR-' + (5400 + i),
       candidate: cand, tier: 'Standard', state, placed,
       slaRemainingMin: remaining, writer, coupon, amountPaid,
-      score: cand.score,
+      score: cand.score, originalResume,
     });
   }
   list.sort((a, b) => a.slaRemainingMin - b.slaRemainingMin);
@@ -39964,6 +39966,8 @@ function RRDetailScreen({ orderId, goBack }) {
   const order = window.RR_ORDERS_FULL.find(o => o.id === orderId) || window.RR_ORDERS_FULL[0];
   const [assignedWriter, setAssignedWriter] = React.useState(order.writer || '—');
   const [currentState, setCurrentState] = React.useState(order.state);
+  const [rrResume, setRRResume] = React.useState(order.originalResume);
+  const [showResumeUploadModal, setShowResumeUploadModal] = React.useState(false);
   const slaCritical = order.slaRemainingMin < 4 * 60;
 
   const history = [
@@ -40016,30 +40020,46 @@ function RRDetailScreen({ orderId, goBack }) {
           <div className="card mb-4">
             <div className="card-head">
               <h3 className="card-title">Candidate's resume</h3>
-              <div className="flex items-center gap-3">
-                <ScoreBadge value={order.score} />
-                <button className="btn btn-ghost btn-sm"><Icon name="download" size={12} /> Download</button>
-                <button className="btn btn-ghost btn-sm"><Icon name="external" size={12} /> Open PDF</button>
-              </div>
-            </div>
-            <div style={{ padding: 20, display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-              {/* PDF thumbnail mockup */}
-              <div style={{ width: 110, height: 148, background: 'linear-gradient(180deg,#fff 0%,#f5f5f7 100%)', border: '1px solid var(--border-1)', borderRadius: 6, flexShrink: 0, display: 'flex', flexDirection: 'column', padding: '14px 10px', gap: 6, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-                <div style={{ height: 8, width: '60%', background: '#1D2B3A', opacity: 0.8, borderRadius: 2 }}></div>
-                <div style={{ height: 5, width: '80%', background: 'var(--border-2)', borderRadius: 2 }}></div>
-                <div style={{ height: 5, width: '70%', background: 'var(--border-2)', borderRadius: 2, marginBottom: 6 }}></div>
-                {[90,75,85,65,80,70,75].map((w, i) => <div key={i} style={{ height: 3, width: w+'%', background: 'var(--border-1)', borderRadius: 2 }}></div>)}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="font-semi text-sm" style={{ marginBottom: 4 }}>{order.candidate.name.replace(/\s+/g, '_')}_resume.pdf</div>
-                <div className="text-xs text-muted" style={{ marginBottom: 2 }}>Received with order &nbsp;·&nbsp; {fmtDateTime(order.placed)}</div>
-                <div className="text-xs text-muted" style={{ marginBottom: 12 }}>312 KB · 2 pages</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'var(--bg-alt)', borderRadius: 6, width: 'fit-content' }}>
-                  <span className="text-xs text-muted">Resume score</span>
+              {rrResume && (
+                <div className="flex items-center gap-3">
                   <ScoreBadge value={order.score} />
+                  <button className="btn btn-ghost btn-sm"><Icon name="download" size={12} /> Download</button>
+                  <button className="btn btn-ghost btn-sm"><Icon name="external" size={12} /> Open PDF</button>
+                </div>
+              )}
+            </div>
+            {rrResume ? (
+              <div style={{ padding: 20, display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+                <div style={{ width: 110, height: 148, background: 'linear-gradient(180deg,#fff 0%,#f5f5f7 100%)', border: '1px solid var(--border-1)', borderRadius: 6, flexShrink: 0, display: 'flex', flexDirection: 'column', padding: '14px 10px', gap: 6, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                  <div style={{ height: 8, width: '60%', background: '#1D2B3A', opacity: 0.8, borderRadius: 2 }}></div>
+                  <div style={{ height: 5, width: '80%', background: 'var(--border-2)', borderRadius: 2 }}></div>
+                  <div style={{ height: 5, width: '70%', background: 'var(--border-2)', borderRadius: 2, marginBottom: 6 }}></div>
+                  {[90,75,85,65,80,70,75].map((w, i) => <div key={i} style={{ height: 3, width: w+'%', background: 'var(--border-1)', borderRadius: 2 }}></div>)}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="font-semi text-sm" style={{ marginBottom: 4 }}>{rrResume.name}</div>
+                  <div className="text-xs text-muted" style={{ marginBottom: 2 }}>Uploaded {fmtDateTime(rrResume.uploadedAt)}</div>
+                  <div className="text-xs text-muted" style={{ marginBottom: 12 }}>312 KB · 2 pages</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'var(--bg-alt)', borderRadius: 6, width: 'fit-content' }}>
+                    <span className="text-xs text-muted">Resume score</span>
+                    <ScoreBadge value={order.score} />
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div style={{ padding: 20 }}>
+                <div style={{ padding: '20px 24px', background: 'var(--bg-alt)', borderRadius: 8, border: '2px dashed var(--border-2)', display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 8, background: '#fff', border: '1px solid var(--border-1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon name="upload" size={18} style={{ stroke: 'var(--fg-3)' }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div className="font-semi text-sm" style={{ marginBottom: 2 }}>No resume uploaded during payment</div>
+                    <div className="text-xs text-muted">Obtain the resume from the candidate and upload it manually.</div>
+                  </div>
+                  <button className="btn btn-primary btn-sm" onClick={() => setShowResumeUploadModal(true)}>Upload resume</button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Report */}
@@ -40076,11 +40096,36 @@ function RRDetailScreen({ orderId, goBack }) {
           <NotesPanel />
           <ActivityLogPanel events={[
             { icon: 'card', tone: 'violet', when: order.placed, text: 'Order placed', meta: [fmtINR(order.amountPaid), order.coupon ? `Coupon ${order.coupon}` : null].filter(Boolean) },
+            ...(rrResume && !order.originalResume ? [{ icon: 'upload', tone: 'blue', when: rrResume.uploadedAt, text: 'Resume uploaded manually by ops', meta: [] }] : []),
             { icon: 'user', tone: 'green', when: relDate(0, 10, 5), text: 'Writer assigned: ' + (assignedWriter !== '—' ? assignedWriter : 'pending'), meta: [] },
             { icon: 'pulse', tone: 'blue', when: relDate(0, 15, 30), text: 'Status: ' + order.state, meta: [] },
           ].filter((_, i) => i < (order.state === 'New' ? 1 : 4))} />
         </div>
       </div>
+
+      {showResumeUploadModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#fff', borderRadius: 12, padding: 28, width: 440, boxShadow: 'var(--shadow-lg)' }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 style={{ fontSize: 16, fontWeight: 700 }}>Upload candidate resume</h3>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowResumeUploadModal(false)}><Icon name="x" size={14} /></button>
+            </div>
+            <div style={{ padding: '24px', background: 'var(--bg-alt)', borderRadius: 8, border: '2px dashed var(--border-2)', textAlign: 'center', marginBottom: 16 }}>
+              <Icon name="upload" size={24} style={{ stroke: 'var(--fg-3)', marginBottom: 8 }} />
+              <div className="text-sm font-semi" style={{ marginBottom: 4 }}>Click to choose a file or drag & drop</div>
+              <div className="text-xs text-muted">PDF or DOCX</div>
+            </div>
+            <p className="text-xs text-muted" style={{ marginBottom: 16 }}>Manually obtained from the candidate. Will be visible to the assigned writer.</p>
+            <div className="flex gap-2 justify-end">
+              <button className="btn btn-secondary" onClick={() => setShowResumeUploadModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                setRRResume({ name: `${order.candidate.name.split(' ')[0]}_Resume.pdf`, uploadedAt: new Date() });
+                setShowResumeUploadModal(false);
+              }}>Upload</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -40992,6 +41037,8 @@ function MRRDetailScreen({ orderId, goBack }) {
   const [rewrittenUploaded, setRewrittenUploaded] = React.useState(!!order.rewrittenResume);
   const [uploadedScore, setUploadedScore] = React.useState(order.rewrittenScore);
   const [showUploadModal, setShowUploadModal] = React.useState(false);
+  const [mrrOriginalResume, setMrrOriginalResume] = React.useState(order.originalResume);
+  const [showOriginalUploadModal, setShowOriginalUploadModal] = React.useState(false);
   const [assignedWriter, setAssignedWriter] = React.useState(order.writer || '—');
   const [currentState, setCurrentState] = React.useState(order.state);
 
@@ -41090,21 +41137,25 @@ function MRRDetailScreen({ orderId, goBack }) {
               {/* Original resume */}
               <div>
                 <div className="text-xs cap mb-2" style={{ color: 'var(--fg-3)' }}>Original resume (from candidate)</div>
-                {order.originalResume ? (
+                {mrrOriginalResume ? (
                   <div className="flex items-center gap-3" style={{ padding: '12px 14px', background: 'var(--bg-alt)', borderRadius: 8 }}>
                     <div style={{ width: 32, height: 32, borderRadius: 6, background: 'var(--primary-50)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Icon name="file" size={15} style={{ stroke: 'var(--primary)' }} />
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div className="font-semi text-sm">{order.originalResume.name}</div>
-                      <div className="text-xs text-muted">Uploaded {fmtDateTime(order.originalResume.uploadedAt)} · Score: <span style={{ fontWeight: 600 }}>{order.originalScore}</span></div>
+                      <div className="font-semi text-sm">{mrrOriginalResume.name}</div>
+                      <div className="text-xs text-muted">Uploaded {fmtDateTime(mrrOriginalResume.uploadedAt)} · Score: <span style={{ fontWeight: 600 }}>{order.originalScore}</span></div>
                     </div>
                     <button className="btn btn-ghost btn-sm"><Icon name="download" size={13} /> Download</button>
                   </div>
                 ) : (
-                  <div style={{ padding: '14px', background: 'var(--bg-alt)', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <Icon name="clock" size={14} style={{ stroke: 'var(--fg-3)' }} />
-                    <span className="text-sm text-muted">Waiting for candidate to upload resume</span>
+                  <div style={{ padding: '14px 16px', background: 'var(--bg-alt)', borderRadius: 8, border: '2px dashed var(--border-2)', display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <Icon name="upload" size={16} style={{ stroke: 'var(--fg-3)', flexShrink: 0 }} />
+                    <div style={{ flex: 1 }}>
+                      <div className="text-sm font-semi" style={{ marginBottom: 1 }}>No resume uploaded during payment</div>
+                      <div className="text-xs text-muted">Obtain the resume from the candidate and upload it manually.</div>
+                    </div>
+                    <button className="btn btn-primary btn-sm" onClick={() => setShowOriginalUploadModal(true)}>Upload resume</button>
                   </div>
                 )}
               </div>
@@ -41131,7 +41182,7 @@ function MRRDetailScreen({ orderId, goBack }) {
                       <div className="text-sm font-semi">Upload rewritten resume</div>
                       <div className="text-xs text-muted">PDF or DOCX · Score will be auto-calculated on upload</div>
                     </div>
-                    <button className="btn btn-primary btn-sm" onClick={() => setShowUploadModal(true)} disabled={!order.originalResume}>Upload</button>
+                    <button className="btn btn-primary btn-sm" onClick={() => setShowUploadModal(true)} disabled={!mrrOriginalResume}>Upload</button>
                   </div>
                 )}
               </div>
@@ -41142,14 +41193,39 @@ function MRRDetailScreen({ orderId, goBack }) {
           <NotesPanel />
           <ActivityLogPanel events={[
             { icon: 'card', tone: 'violet', when: order.placed, text: 'Order placed', meta: [fmtINR(order.amountPaid), order.rrDiscount > 0 ? `RR discount -₹99 applied` : null, order.coupon ? `Coupon ${order.coupon}` : null].filter(Boolean) },
-            ...(order.originalResume ? [{ icon: 'upload', tone: 'blue', when: order.originalResume.uploadedAt, text: 'Candidate uploaded original resume', meta: [`Score: ${order.originalScore}`] }] : []),
+            ...(mrrOriginalResume ? [{ icon: 'upload', tone: 'blue', when: mrrOriginalResume.uploadedAt, text: order.originalResume ? 'Candidate submitted original resume' : 'Resume uploaded manually by ops', meta: [`Score: ${order.originalScore}`] }] : []),
             ...(order.writer !== '—' ? [{ icon: 'user', tone: 'green', when: relDate(0, 10, 0), text: `Writer assigned: ${order.writer}`, meta: [] }] : []),
             ...(order.rewrittenResume ? [{ icon: 'file', tone: 'green', when: order.rewrittenResume.uploadedAt, text: 'Rewritten resume uploaded', meta: [`Score: ${uploadedScore}`] }] : []),
           ].filter(e => e.when)} />
         </div>
       </div>
 
-      {/* Upload modal */}
+      {/* Upload candidate resume modal */}
+      {showOriginalUploadModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#fff', borderRadius: 12, padding: 28, width: 440, boxShadow: 'var(--shadow-lg)' }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 style={{ fontSize: 16, fontWeight: 700 }}>Upload candidate resume</h3>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowOriginalUploadModal(false)}><Icon name="x" size={14} /></button>
+            </div>
+            <div style={{ padding: '24px', background: 'var(--bg-alt)', borderRadius: 8, border: '2px dashed var(--border-2)', textAlign: 'center', marginBottom: 16 }}>
+              <Icon name="upload" size={24} style={{ stroke: 'var(--fg-3)', marginBottom: 8 }} />
+              <div className="text-sm font-semi" style={{ marginBottom: 4 }}>Drop file here or click to browse</div>
+              <div className="text-xs text-muted">PDF or DOCX</div>
+            </div>
+            <p className="text-xs text-muted" style={{ marginBottom: 16 }}>Manually obtained from the candidate. Will be visible to the assigned writer.</p>
+            <div className="flex gap-2 justify-end">
+              <button className="btn btn-secondary" onClick={() => setShowOriginalUploadModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                setMrrOriginalResume({ name: `${order.candidate.name.split(' ')[0]}_Resume.pdf`, uploadedAt: new Date() });
+                setShowOriginalUploadModal(false);
+              }}>Upload</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upload rewritten resume modal */}
       {showUploadModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ background: '#fff', borderRadius: 12, padding: 28, width: 440, boxShadow: 'var(--shadow-lg)' }}>

@@ -21,11 +21,13 @@ function buildRROrdersFull() {
     const writer = ['New','Cancelled'].includes(state) ? '—' : writers[1 + Math.floor(r()*3)];
     const coupon = coupons[Math.floor(r() * coupons.length)];
     const amountPaid = coupon === 'RR99FREE' ? 49 : coupon === 'WELCOME99' ? 0 : 99;
+    const hasResume = state !== 'New';
+    const originalResume = hasResume ? { name: `${cand.name.split(' ')[0]}_Resume.pdf`, uploadedAt: placed } : null;
     list.push({
       id: 'RR-' + (5400 + i),
       candidate: cand, tier: 'Standard', state, placed,
       slaRemainingMin: remaining, writer, coupon, amountPaid,
-      score: cand.score,
+      score: cand.score, originalResume,
     });
   }
   list.sort((a, b) => a.slaRemainingMin - b.slaRemainingMin);

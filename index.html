@@ -36550,7 +36550,7 @@ function buildMRROrders() {
     const originalScore = scores[Math.floor(r() * scores.length)];
     const hasRewritten = ['Delivered'].includes(state);
     const rewrittenScore = hasRewritten ? rewrittenScores[Math.floor(r() * rewrittenScores.length)] : null;
-    const hasOriginalResume = state !== 'New';
+    const hasOriginalResume = state !== 'New' || r() < 0.55;
     list.push({
       id: 'MRR-' + (6100 + i),
       candidate: cand,

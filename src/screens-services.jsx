@@ -207,10 +207,10 @@ function RRListScreen({ openOrder }) {
         </>} />
 
       <div className="kpi-row mb-4" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
-        <KpiTile label="Open" value={open.length} sub="not closed" />
-        <KpiTile label="Breached" value={breached} sub="needs intervention" tone="red" />
-        <KpiTile label="At risk (<4h)" value={risk} sub="SLA red zone" tone="amber" />
-        <KpiTile label="Healthy" value={open.length - breached - risk} sub="on track" tone="green" />
+        <KpiTile label="New" value={orders.filter(o => o.state === 'New').length} sub="paid · awaiting resume" tone="amber" />
+        <KpiTile label="In Review" value={orders.filter(o => o.state === 'In Review').length} sub="with writer" tone="violet" />
+        <KpiTile label="Report Ready" value={orders.filter(o => o.state === 'Report Ready').length} sub="awaiting approval" tone="blue" />
+        <KpiTile label="Delivered" value={orders.filter(o => o.state === 'Delivered').length} sub="completed" tone="green" />
       </div>
 
       <div className="list-layout">
@@ -386,7 +386,16 @@ function RRDetailScreen({ orderId, goBack }) {
   const [currentState, setCurrentState] = React.useState(order.state);
   const [rrResume, setRRResume] = React.useState(order.originalResume);
   const [showResumeUploadModal, setShowResumeUploadModal] = React.useState(false);
+  const [showDeliveryModal, setShowDeliveryModal] = React.useState(false);
   const slaCritical = order.slaRemainingMin < 4 * 60;
+
+  const handleRRTransition = (nextState) => {
+    if (nextState === 'Delivered') {
+      setShowDeliveryModal(true);
+    } else {
+      setCurrentState(nextState);
+    }
+  };
 
   const history = [
     { actor: 'System', action: 'created order', when: order.placed },
@@ -414,7 +423,7 @@ function RRDetailScreen({ orderId, goBack }) {
 
       <div className="page-head">
         <div>
-          <div className="flex items-center gap-3"><h1>{order.id}</h1><Pill tone={window.rrStateTone(order.state)} dot>{order.state}</Pill></div>
+          <div className="flex items-center gap-3"><h1>{order.id}</h1><Pill tone={window.rrStateTone(currentState)} dot>{currentState}</Pill></div>
           <p>Resume Report · placed {fmtDateTime(order.placed)}</p>
         </div>
         <div className="page-head-actions">
@@ -431,7 +440,7 @@ function RRDetailScreen({ orderId, goBack }) {
         />
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <StatusTransitionPanel currentState={currentState} transitions={window.RR_TRANSITIONS} tone={window.rrStateTone} history={history} onTransition={setCurrentState}
+          <StatusTransitionPanel currentState={currentState} transitions={window.RR_TRANSITIONS} tone={window.rrStateTone} history={history} onTransition={handleRRTransition}
             writerNode={<window.WriterPickerBtn value={assignedWriter} onChange={setAssignedWriter} />} />
 
           {/* Candidate's resume */}
@@ -520,6 +529,38 @@ function RRDetailScreen({ orderId, goBack }) {
           ].filter((_, i) => i < (order.state === 'New' ? 1 : 4))} />
         </div>
       </div>
+
+      {showDeliveryModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#fff', borderRadius: 12, padding: 28, width: 480, boxShadow: 'var(--shadow-lg)' }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 style={{ fontSize: 16, fontWeight: 700 }}>Deliver report to candidate</h3>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowDeliveryModal(false)}><Icon name="x" size={14} /></button>
+            </div>
+            <p className="text-sm" style={{ color: 'var(--fg-2)', marginBottom: 20, lineHeight: 1.6 }}>
+              The completed resume report will be sent to the candidate by email. Please confirm the delivery details before proceeding.
+            </p>
+            <div style={{ background: 'var(--bg-alt)', borderRadius: 10, padding: '16px 18px', marginBottom: 20, border: '1px solid var(--border-1)' }}>
+              <div className="flex items-center justify-between" style={{ marginBottom: 10, paddingBottom: 10, borderBottom: '1px solid var(--border-1)' }}>
+                <span className="text-xs text-muted" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Candidate</span>
+                <span className="font-semi text-sm">{order.candidate.name}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>Email</span>
+                <span className="font-semi text-sm" style={{ color: 'var(--primary)' }}>{order.candidate.email}</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'var(--primary-50)', borderRadius: 8, marginBottom: 20 }}>
+              <Icon name="pulse" size={13} style={{ stroke: 'var(--primary)', flexShrink: 0 }} />
+              <span className="text-xs" style={{ color: 'var(--primary-800)' }}>Once delivered, the order will be marked as completed and cannot be moved back.</span>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button className="btn btn-secondary" onClick={() => setShowDeliveryModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => { setCurrentState('Delivered'); setShowDeliveryModal(false); }}>Confirm &amp; deliver</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showResumeUploadModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>

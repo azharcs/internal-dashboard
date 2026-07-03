@@ -207,7 +207,7 @@ function RRListScreen({ openOrder }) {
         </>} />
 
       <div className="kpi-row mb-4" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
-        <KpiTile label="New" value={orders.filter(o => o.state === 'New').length} sub="paid · awaiting resume" tone="amber" />
+        <KpiTile label="New" value={orders.filter(o => o.state === 'New').length} sub="no resume or writer yet" tone="amber" />
         <KpiTile label="In Review" value={orders.filter(o => o.state === 'In Review').length} sub="with writer" tone="violet" />
         <KpiTile label="Report Ready" value={orders.filter(o => o.state === 'Report Ready').length} sub="awaiting approval" tone="blue" />
         <KpiTile label="Delivered" value={orders.filter(o => o.state === 'Delivered').length} sub="completed" tone="green" />

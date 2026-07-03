@@ -93,6 +93,8 @@ function WriterPickerBtn({ value, onChange, size = 'sm' }) {
   }, []);
 
   const writers = TEAM_MEMBERS.filter(m => m.role === 'resume_writer' && m.status === 'active');
+  const me = window.CURRENT_USER;
+  const iAmWriter = me && me.role === 'resume_writer';
 
   const rrAssigned = (w) => (window.RR_ORDERS_FULL || []).filter(o => o.writer === w.name && !['Closed','Cancelled'].includes(o.state)).length;
   const mrrAssigned = (w) => (window.MRR_ORDERS || []).filter(o => o.writer === w.name && !['Delivered','Cancelled'].includes(o.state)).length;
@@ -131,6 +133,20 @@ function WriterPickerBtn({ value, onChange, size = 'sm' }) {
               Assign to writer
             </div>
           </div>
+
+          {iAmWriter && value !== me.name && (
+            <button
+              onClick={() => { onChange(me.name); setOpen(false); }}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', border: 0, background: 'var(--primary-50)', cursor: 'pointer', textAlign: 'left', borderBottom: '1px solid var(--border-1)' }}>
+              <div style={{ width: 28, height: 28, borderRadius: 99, background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                {me.initials}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--primary-800)' }}>Assign to me</div>
+                <div style={{ fontSize: 10, color: 'var(--primary-600)' }}>{me.name}</div>
+              </div>
+            </button>
+          )}
 
           {value && value !== '—' && (
             <button

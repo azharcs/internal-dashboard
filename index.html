@@ -36403,7 +36403,7 @@ function buildRROrdersFull() {
     const writer = ['New','Cancelled'].includes(state) ? '—' : writers[1 + Math.floor(r()*3)];
     const coupon = coupons[Math.floor(r() * coupons.length)];
     const amountPaid = coupon === 'RR99FREE' ? 49 : coupon === 'WELCOME99' ? 0 : 99;
-    const hasResume = state !== 'New';
+    const hasResume = state !== 'New' || r() < 0.55;
     const originalResume = hasResume ? { name: `${cand.name.split(' ')[0]}_Resume.pdf`, uploadedAt: placed } : null;
     list.push({
       id: 'RR-' + (5400 + i),

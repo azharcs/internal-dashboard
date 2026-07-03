@@ -1472,10 +1472,10 @@ function MRRListScreen({ openOrder }) {
         </>} />
 
       <div className="kpi-row mb-4" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
-        <KpiTile label="Open" value={open.length} sub="not delivered" />
-        <KpiTile label="Awaiting resume" value={orders.filter(o => o.state === 'New').length} sub="candidate to upload" tone="amber" />
-        <KpiTile label="In rewrite" value={orders.filter(o => o.state === 'In Rewrite').length} sub="being worked on" tone="violet" />
+        <KpiTile label="New" value={orders.filter(o => o.state === 'New').length} sub="no resume or writer yet" tone="amber" />
+        <KpiTile label="In Rewrite" value={orders.filter(o => o.state === 'In Rewrite').length} sub="writer working" tone="violet" />
         <KpiTile label="Delivered" value={orders.filter(o => o.state === 'Delivered').length} sub="completed" tone="green" />
+        <KpiTile label="Cancelled" value={orders.filter(o => o.state === 'Cancelled').length} sub="cancelled" tone="red" />
       </div>
 
       <div className="list-layout">
@@ -1539,6 +1539,17 @@ function MRRDetailScreen({ orderId, goBack }) {
     ...(order.writer !== '—' ? [{ actor: 'Sushant V.', action: `assigned writer ${order.writer}`, when: relDate(0, 10, 0), reason: 'Manual' }] : []),
     ...(order.rewrittenResume ? [{ actor: order.writer, action: 'uploaded rewritten resume', when: order.rewrittenResume.uploadedAt }] : []),
   ].filter(h => h.when);
+
+  const mrrRequirements = currentState === 'New' ? [
+    { label: 'Resume uploaded', met: !!mrrOriginalResume },
+    { label: 'Writer assigned', met: assignedWriter !== '—' },
+  ] : null;
+
+  const mrrBlockedTransitions = currentState === 'New' && (!mrrOriginalResume || assignedWriter === '—')
+    ? { 'In Rewrite': !mrrOriginalResume && assignedWriter === '—' ? 'Upload resume and assign a writer first'
+        : !mrrOriginalResume ? 'Upload candidate resume first'
+        : 'Assign a writer first' }
+    : null;
 
   return (
     <div className="page">
@@ -1618,7 +1629,8 @@ function MRRDetailScreen({ orderId, goBack }) {
         {/* Main content */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <StatusTransitionPanel currentState={currentState} transitions={window.MRR_TRANSITIONS} tone={window.mrrStateTone} history={history} onTransition={setCurrentState}
-            writerNode={<window.WriterPickerBtn value={assignedWriter} onChange={setAssignedWriter} />} />
+            writerNode={<window.WriterPickerBtn value={assignedWriter} onChange={setAssignedWriter} />}
+            requirements={mrrRequirements} blockedTransitions={mrrBlockedTransitions} />
 
           {/* Documents */}
           <div className="card mb-4">
@@ -1651,9 +1663,9 @@ function MRRDetailScreen({ orderId, goBack }) {
                 )}
               </div>
 
-              {/* Rewritten resume */}
-              <div>
-                <div className="text-xs cap mb-2" style={{ color: 'var(--fg-3)' }}>Rewritten resume (ops upload)</div>
+              {/* Rewritten resume — only shown from In Rewrite onwards */}
+              {(currentState === 'In Rewrite' || currentState === 'Delivered' || rewrittenUploaded) && <div>
+                <div className="text-xs cap mb-2" style={{ color: 'var(--fg-3)' }}>Rewritten resume (writer upload)</div>
                 {rewrittenUploaded && order.rewrittenResume ? (
                   <div className="flex items-center gap-3" style={{ padding: '12px 14px', background: 'var(--green-soft)', borderRadius: 8, border: '1px solid var(--green-strong)' }}>
                     <div style={{ width: 32, height: 32, borderRadius: 6, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1673,10 +1685,10 @@ function MRRDetailScreen({ orderId, goBack }) {
                       <div className="text-sm font-semi">Upload rewritten resume</div>
                       <div className="text-xs text-muted">PDF or DOCX · Score will be auto-calculated on upload</div>
                     </div>
-                    <button className="btn btn-primary btn-sm" onClick={() => setShowUploadModal(true)} disabled={!mrrOriginalResume}>Upload</button>
+                    <button className="btn btn-primary btn-sm" onClick={() => setShowUploadModal(true)} disabled={!mrrOriginalResume || currentState !== 'In Rewrite'}>Upload</button>
                   </div>
                 )}
-              </div>
+              </div>}
 
             </div>
           </div>

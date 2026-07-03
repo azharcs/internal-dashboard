@@ -144,7 +144,7 @@ function buildRCOrdersFull() {
   return list;
 }
 
-const MRR_STATES_ALL = ['New','Resume Received','In Rewrite','Delivered','Cancelled'];
+const MRR_STATES_ALL = ['New','In Rewrite','Delivered','Cancelled'];
 
 function buildMRROrders() {
   const r = _rand(137);
@@ -193,13 +193,12 @@ window.MRR_STATES_ALL = MRR_STATES_ALL;
 window.MRR_ORDERS = buildMRROrders();
 
 window.mrrStateTone = (s) => ({
-  'New':'grey','Resume Received':'blue','In Rewrite':'violet',
+  'New':'grey','In Rewrite':'violet',
   'Delivered':'green','Cancelled':'red'
 }[s] || 'grey');
 
 window.MRR_TRANSITIONS = {
-  'New': ['Resume Received','Cancelled'],
-  'Resume Received': ['In Rewrite','Cancelled'],
+  'New': ['In Rewrite','Cancelled'],
   'In Rewrite': ['Delivered'],
   'Delivered': [],
   'Cancelled': [],

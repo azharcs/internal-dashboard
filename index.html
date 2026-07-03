@@ -36720,7 +36720,6 @@ function WriterPickerBtn({ value, onChange, size = 'sm' }) {
 
   const writers = TEAM_MEMBERS.filter(m => m.role === 'resume_writer' && m.status === 'active');
   const me = window.CURRENT_USER;
-  const iAmWriter = me && me.role === 'resume_writer';
 
   const rrAssigned = (w) => (window.RR_ORDERS_FULL || []).filter(o => o.writer === w.name && !['Closed','Cancelled'].includes(o.state)).length;
   const mrrAssigned = (w) => (window.MRR_ORDERS || []).filter(o => o.writer === w.name && !['Delivered','Cancelled'].includes(o.state)).length;
@@ -36760,7 +36759,7 @@ function WriterPickerBtn({ value, onChange, size = 'sm' }) {
             </div>
           </div>
 
-          {iAmWriter && value !== me.name && (
+          {me && value !== me.name && (
             <button
               onClick={() => { onChange(me.name); setOpen(false); }}
               style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', border: 0, background: 'var(--primary-50)', cursor: 'pointer', textAlign: 'left', borderBottom: '1px solid var(--border-1)' }}>

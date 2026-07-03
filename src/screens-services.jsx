@@ -434,16 +434,9 @@ function RRDetailScreen({ orderId, goBack }) {
     { actor: 'Sushant V.', action: `assigned writer ${order.writer}`, when: relDate(0, 10, 5), reason: 'Manual' },
   ].filter((_, i) => i < (order.writer === '—' ? 1 : 2));
 
-  const [finalVersion, setFinalVersion] = React.useState(currentState === 'Delivered' || currentState === 'Report Ready' ? 'v2' : null);
-
-  const markFinal = (vKey) => {
-    setFinalVersion(vKey);
-    setCurrentState('Report Ready');
-  };
-
   const versions = [
-    { v: 'v2', uploader: assignedWriter !== '—' ? assignedWriter : 'Aditi K.', when: relDate(0, 16, 0), note: 'Final pass — clarified GCC alignment in summary', isFinal: finalVersion === 'v2' },
-    { v: 'v1', uploader: assignedWriter !== '—' ? assignedWriter : 'Aditi K.', when: relDate(0, 13, 22), note: 'Initial report draft', isFinal: finalVersion === 'v1' },
+    { v: 'v2', uploader: assignedWriter !== '—' ? assignedWriter : 'Aditi K.', when: relDate(0, 16, 0), note: 'Final pass — clarified GCC alignment in summary' },
+    { v: 'v1', uploader: assignedWriter !== '—' ? assignedWriter : 'Aditi K.', when: relDate(0, 13, 22), note: 'Initial report draft' },
   ];
 
   return (
@@ -554,7 +547,6 @@ function RRDetailScreen({ orderId, goBack }) {
                     </div>
                     <span className="text-xs text-muted">{fmtDateTime(v.when)}</span>
                     <button className="btn btn-ghost btn-sm" onClick={() => openReportEditor(order)}><Icon name="external" size={12} /> Edit</button>
-                    {v.isFinal ? <Pill tone="green" dot>Final</Pill> : (!finalVersion && currentState === 'In Review') ? <button className="btn btn-ghost btn-sm" onClick={() => markFinal(v.v)}>Mark as final</button> : null}
                   </div>
                 ))}
               </div>

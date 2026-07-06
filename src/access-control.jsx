@@ -1,14 +1,30 @@
 /* Access control — roles, team members, permission helpers */
 
 const ROLES = {
+  super_admin: {
+    label: 'Super Admin',
+    description: 'Full access + role management',
+    color: '#7C3AED',
+    bg: '#F5F3FF',
+    services: ['RR','RB','LO','IIQ','RC','MRR'],
+    scope: 'all',
+    canManageUsers: true,
+    canManageRoles: true,
+    canViewCandidates: true,
+    canViewDropoffs: true,
+    canViewOffers: true,
+    canViewSettings: true,
+    canTransition: true,
+  },
   admin: {
     label: 'Admin',
-    description: 'Full access — all services, all orders, user management',
+    description: 'Full access — all services, all orders',
     color: 'var(--violet-strong)',
     bg: 'var(--violet-soft)',
     services: ['RR','RB','LO','IIQ','RC','MRR'],
     scope: 'all',
     canManageUsers: true,
+    canManageRoles: false,
     canViewCandidates: true,
     canViewDropoffs: true,
     canViewOffers: true,
@@ -23,6 +39,7 @@ const ROLES = {
     services: ['RR','MRR'],
     scope: 'assigned',
     canManageUsers: false,
+    canManageRoles: false,
     canViewCandidates: false,
     canViewDropoffs: false,
     canViewOffers: false,
@@ -32,7 +49,7 @@ const ROLES = {
 };
 
 const TEAM_MEMBERS = [
-  { id: 'sushant', name: 'Sushant V.', email: 'sushant@talent500.co',  role: 'admin',         initials: 'SV', status: 'active',    joinedDaysAgo: 180 },
+  { id: 'sushant', name: 'Sushant V.', email: 'sushant@talent500.co',  role: 'super_admin',   initials: 'SV', status: 'active',    joinedDaysAgo: 180 },
   { id: 'priya',   name: 'Priya M.',   email: 'priya@talent500.co',    role: 'admin',         initials: 'PM', status: 'active',    joinedDaysAgo: 120 },
   { id: 'aditi',   name: 'Aditi K.',   email: 'aditi@talent500.co',    role: 'resume_writer', initials: 'AK', status: 'active',    joinedDaysAgo: 90 },
   { id: 'vivek',   name: 'Vivek M.',   email: 'vivek@talent500.co',    role: 'resume_writer', initials: 'VM', status: 'active',    joinedDaysAgo: 60 },
@@ -50,7 +67,8 @@ function makeAccess(user) {
     services,
     can: (key) => !!role[key],
     canAccess: (code) => services.includes(code),
-    isAdmin: () => user.role === 'admin',
+    isAdmin: () => user.role === 'admin' || user.role === 'super_admin',
+    isSuperAdmin: () => user.role === 'super_admin',
     isRestricted: () => role.scope === 'assigned',
     filterOrders: (orders, writerKey = 'writer') => {
       if (role.scope === 'all') return orders;
@@ -253,12 +271,17 @@ function TeamAccessTab() {
 
   const writerCount = members.filter(m => m.role === 'resume_writer' && m.status === 'active').length;
   const adminCount = members.filter(m => m.role === 'admin' && m.status === 'active').length;
+  const superAdminCount = members.filter(m => m.role === 'super_admin' && m.status === 'active').length;
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: member ? '1fr 380px' : '1fr', gap: 20 }}>
       <div>
         {/* Summary chips */}
         <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+          <div style={{ padding: '10px 16px', background: '#F5F3FF', borderRadius: 8, textAlign: 'center', minWidth: 100 }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#7C3AED' }}>{superAdminCount}</div>
+            <div style={{ fontSize: 11, color: '#7C3AED', fontWeight: 600 }}>Super Admins</div>
+          </div>
           <div style={{ padding: '10px 16px', background: 'var(--violet-soft)', borderRadius: 8, textAlign: 'center', minWidth: 100 }}>
             <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--violet-strong)' }}>{adminCount}</div>
             <div style={{ fontSize: 11, color: 'var(--violet-strong)', fontWeight: 600 }}>Admins</div>
@@ -272,7 +295,7 @@ function TeamAccessTab() {
 
         {/* Role filter */}
         <div className="flex gap-2 mb-4">
-          {['all', 'admin', 'resume_writer'].map(r => (
+          {['all', 'super_admin', 'admin', 'resume_writer'].map(r => (
             <button key={r} onClick={() => setRoleFilter(r)}
               className="btn btn-sm"
               style={{ background: roleFilter === r ? 'var(--primary)' : 'transparent', color: roleFilter === r ? '#fff' : 'var(--fg-2)', border: '1px solid var(--border-1)', padding: '4px 12px', fontSize: 12 }}>
@@ -375,20 +398,32 @@ function MemberDetailPanel({ member, members, setMembers, onClose }) {
         {/* Role */}
         <div>
           <div className="text-xs cap mb-2" style={{ color: 'var(--fg-3)' }}>Role</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {Object.entries(ROLES).map(([key, r]) => (
-              <label key={key} onClick={() => setEditRole(key)}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 8, cursor: 'pointer', border: `1px solid ${editRole === key ? 'var(--primary)' : 'var(--border-1)'}`, background: editRole === key ? 'var(--primary-50)' : '#fff' }}>
-                <span style={{ width: 16, height: 16, borderRadius: 99, border: `2px solid ${editRole === key ? 'var(--primary)' : 'var(--border-2)'}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                  {editRole === key && <span style={{ width: 8, height: 8, borderRadius: 99, background: 'var(--primary)', display: 'block' }}></span>}
-                </span>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: r.color }}>{r.label}</div>
-                  <div className="text-xs text-muted">{r.description}</div>
-                </div>
-              </label>
-            ))}
-          </div>
+          {window.ACCESS.can('canManageRoles') ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {Object.entries(ROLES).map(([key, r]) => (
+                <label key={key} onClick={() => setEditRole(key)}
+                  style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 8, cursor: 'pointer', border: `1px solid ${editRole === key ? 'var(--primary)' : 'var(--border-1)'}`, background: editRole === key ? 'var(--primary-50)' : '#fff' }}>
+                  <span style={{ width: 16, height: 16, borderRadius: 99, border: `2px solid ${editRole === key ? 'var(--primary)' : 'var(--border-2)'}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                    {editRole === key && <span style={{ width: 8, height: 8, borderRadius: 99, background: 'var(--primary)', display: 'block' }}></span>}
+                  </span>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: r.color }}>{r.label}</div>
+                    <div className="text-xs text-muted">{r.description}</div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border-1)', background: 'var(--bg-alt)' }}>
+              <div style={{ width: 28, height: 28, borderRadius: 6, background: ROLES[editRole].bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: ROLES[editRole].color, flexShrink: 0 }}>
+                {editRole === 'super_admin' ? 'SA' : editRole === 'admin' ? 'A' : 'W'}
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: ROLES[editRole].color }}>{ROLES[editRole].label}</div>
+                <div className="text-xs text-muted">Role changes require a Super Admin</div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Access summary */}
@@ -440,10 +475,12 @@ function MemberDetailPanel({ member, members, setMembers, onClose }) {
 
         {/* Actions */}
         <div className="flex gap-2">
-          <button className="btn btn-primary" style={{ flex: 1 }} onClick={save}>
-            {saved ? <><window.Icon name="check" size={13} /> Saved</> : 'Save changes'}
-          </button>
-          <button className="btn btn-secondary" onClick={toggleStatus}>
+          {window.ACCESS.can('canManageRoles') && (
+            <button className="btn btn-primary" style={{ flex: 1 }} onClick={save}>
+              {saved ? <><window.Icon name="check" size={13} /> Saved</> : 'Save role'}
+            </button>
+          )}
+          <button className="btn btn-secondary" style={window.ACCESS.can('canManageRoles') ? {} : { flex: 1 }} onClick={toggleStatus}>
             {member.status === 'active' ? 'Suspend' : 'Reactivate'}
           </button>
         </div>

@@ -217,8 +217,8 @@ function RolePill({ roleKey }) {
 }
 
 function StatusDot({ status }) {
-  const colors = { active: 'var(--green-strong)', invited: 'var(--amber-strong)', suspended: 'var(--fg-4)' };
-  const labels = { active: 'Active', invited: 'Invited', suspended: 'Suspended' };
+  const colors = { active: 'var(--green-strong)', suspended: 'var(--fg-4)' };
+  const labels = { active: 'Active', suspended: 'Suspended' };
   return (
     <span className="flex items-center gap-1" style={{ fontSize: 12, color: colors[status] }}>
       <span style={{ width: 6, height: 6, borderRadius: 99, background: colors[status], display: 'inline-block' }}></span>
@@ -246,7 +246,6 @@ function ServiceAccessChips({ services, allServices = ['RR','MRR'] }) {
 function TeamAccessTab() {
   const [members, setMembers] = React.useState(TEAM_MEMBERS);
   const [selected, setSelected] = React.useState(null);
-  const [inviteOpen, setInviteOpen] = React.useState(false);
   const [roleFilter, setRoleFilter] = React.useState('all');
 
   const filtered = roleFilter === 'all' ? members : members.filter(m => m.role === roleFilter);
@@ -269,9 +268,6 @@ function TeamAccessTab() {
             <div style={{ fontSize: 11, color: 'var(--blue-strong)', fontWeight: 600 }}>Writers</div>
           </div>
           <div style={{ flex: 1 }} />
-          <button className="btn btn-primary btn-sm" onClick={() => setInviteOpen(true)}>
-            <window.Icon name="plus" size={13} /> Invite member
-          </button>
         </div>
 
         {/* Role filter */}
@@ -331,7 +327,6 @@ function TeamAccessTab() {
       </div>
 
       {member && <MemberDetailPanel member={member} members={members} setMembers={setMembers} onClose={() => setSelected(null)} />}
-      {inviteOpen && <InviteModal onClose={() => setInviteOpen(false)} onInvite={(m) => { setMembers([...members, m]); setInviteOpen(false); }} />}
     </div>
   );
 }
@@ -451,65 +446,6 @@ function MemberDetailPanel({ member, members, setMembers, onClose }) {
           <button className="btn btn-secondary" onClick={toggleStatus}>
             {member.status === 'active' ? 'Suspend' : 'Reactivate'}
           </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function InviteModal({ onClose, onInvite }) {
-  const [name, setName] = React.useState('');
-  const [email, setEmail] = React.useState('');
-  const [role, setRole] = React.useState('resume_writer');
-
-  const submit = () => {
-    if (!name.trim() || !email.trim()) return;
-    onInvite({
-      id: 'new-' + Math.floor(Math.random() * 100000),
-      name, email, role,
-      initials: name.split(' ').map(p => p[0]).join('').slice(0,2).toUpperCase(),
-      status: 'invited',
-      joinedDaysAgo: 0,
-    });
-  };
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-      <div style={{ background: '#fff', borderRadius: 12, padding: 28, width: 440, boxShadow: 'var(--shadow-lg)' }}>
-        <div className="flex items-center justify-between mb-5">
-          <h3 style={{ fontSize: 16, fontWeight: 700 }}>Invite team member</h3>
-          <button className="btn btn-ghost btn-sm" onClick={onClose}><window.Icon name="x" size={14} /></button>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div>
-            <label className="text-xs cap mb-1" style={{ color: 'var(--fg-3)', display: 'block' }}>Full name</label>
-            <input className="t500-input" style={{ width: '100%' }} placeholder="Anjali Sharma" value={name} onChange={e => setName(e.target.value)} />
-          </div>
-          <div>
-            <label className="text-xs cap mb-1" style={{ color: 'var(--fg-3)', display: 'block' }}>Work email</label>
-            <input className="t500-input" style={{ width: '100%' }} placeholder="anjali@talent500.co" value={email} onChange={e => setEmail(e.target.value)} />
-          </div>
-          <div>
-            <label className="text-xs cap mb-2" style={{ color: 'var(--fg-3)', display: 'block' }}>Role</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {Object.entries(ROLES).map(([key, r]) => (
-                <label key={key} onClick={() => setRole(key)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, cursor: 'pointer', border: `1px solid ${role === key ? 'var(--primary)' : 'var(--border-1)'}`, background: role === key ? 'var(--primary-50)' : '#fff' }}>
-                  <span style={{ width: 14, height: 14, borderRadius: 99, border: `2px solid ${role === key ? 'var(--primary)' : 'var(--border-2)'}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    {role === key && <span style={{ width: 7, height: 7, borderRadius: 99, background: 'var(--primary)', display: 'block' }}></span>}
-                  </span>
-                  <div>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: r.color }}>{r.label}</span>
-                    <span className="text-xs text-muted" style={{ marginLeft: 8 }}>{r.description}</span>
-                  </div>
-                </label>
-              ))}
-            </div>
-          </div>
-          <div className="flex gap-2 justify-end mt-2">
-            <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
-            <button className="btn btn-primary" onClick={submit} disabled={!name.trim() || !email.trim()}>Send invite</button>
-          </div>
         </div>
       </div>
     </div>

@@ -91,7 +91,7 @@ function StatusTransitionPanel({ currentState, transitions, tone, history, write
             <Pill tone={tone(currentState)} dot>{currentState}</Pill>
           </div>
           <div className="flex gap-2 items-center" style={{ position: 'relative' }}>
-            {writerNode || <button className="btn btn-secondary btn-sm">Assign writer</button>}
+            {writerNode}
             <button className="btn btn-primary btn-sm" disabled={!opts.length || !allRequirementsMet} onClick={() => setPickerOpen(!pickerOpen)}>
               Move to next status <Icon name="chevron-down" size={12} />
             </button>
@@ -478,7 +478,7 @@ function RRDetailScreen({ orderId, goBack }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <StatusTransitionPanel currentState={currentState} transitions={window.RR_TRANSITIONS} tone={window.rrStateTone} history={history} onTransition={handleRRTransition}
             requirements={rrRequirements} blockedTransitions={rrBlockedTransitions}
-            writerNode={<window.WriterPickerBtn value={assignedWriter} onChange={setAssignedWriter} />} />
+            writerNode={!window.ACCESS.isRestricted() && <window.WriterPickerBtn value={assignedWriter} onChange={setAssignedWriter} />} />
 
           {/* Candidate's resume */}
           <div className="card mb-4">
@@ -1637,7 +1637,7 @@ function MRRDetailScreen({ orderId, goBack }) {
         {/* Main content */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <StatusTransitionPanel currentState={currentState} transitions={window.MRR_TRANSITIONS} tone={window.mrrStateTone} history={history} onTransition={setCurrentState}
-            writerNode={<window.WriterPickerBtn value={assignedWriter} onChange={setAssignedWriter} />}
+            writerNode={!window.ACCESS.isRestricted() && <window.WriterPickerBtn value={assignedWriter} onChange={setAssignedWriter} />}
             requirements={mrrRequirements} blockedTransitions={mrrBlockedTransitions} />
 
           {/* Documents */}

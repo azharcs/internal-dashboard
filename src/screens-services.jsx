@@ -244,12 +244,16 @@ function RRListScreen({ openOrder }) {
               return <label key={o.value} className={`filter-chip ${on ? 'is-on' : ''}`} onClick={() => setSlaFilter(s => s.includes(o.value) ? s.filter(x => x !== o.value) : [...s, o.value])}><span className="filter-chip-cb">{on && <Icon name="check" size={9} />}</span><span>{o.label}</span></label>;
             })}
           </div>
-          <h4>Writer</h4>
-          <div className="filter-group">
-            {[...(window.TEAM_MEMBERS || []).filter(m => m.role === 'resume_writer' && m.status === 'active').map(m => m.name), 'Unassigned'].map(w => (
-              <label key={w} className="filter-chip"><span className="filter-chip-cb"></span><span>{w}</span></label>
-            ))}
-          </div>
+          {!window.ACCESS.isRestricted() && (
+            <>
+              <h4>Writer</h4>
+              <div className="filter-group">
+                {[...(window.TEAM_MEMBERS || []).filter(m => m.role === 'resume_writer' && m.status === 'active').map(m => m.name), 'Unassigned'].map(w => (
+                  <label key={w} className="filter-chip"><span className="filter-chip-cb"></span><span>{w}</span></label>
+                ))}
+              </div>
+            </>
+          )}
         </FilterRail>
 
         <div className="table-wrap">
@@ -1481,12 +1485,16 @@ function MRRListScreen({ openOrder }) {
       <div className="list-layout">
         <FilterRail onClear={() => setStateFilter([])}>
           <FilterGroup title="Status" options={window.MRR_STATES_ALL} selected={stateFilter} onToggle={v => setStateFilter(s => s.includes(v) ? s.filter(x => x !== v) : [...s, v])} counts={counts} />
-          <h4>Writer</h4>
-          <div className="filter-group">
-            {[...(window.TEAM_MEMBERS || []).filter(m => m.role === 'resume_writer' && m.status === 'active').map(m => m.name), 'Unassigned'].map(w => (
-              <label key={w} className="filter-chip"><span className="filter-chip-cb"></span><span>{w}</span></label>
-            ))}
-          </div>
+          {!window.ACCESS.isRestricted() && (
+            <>
+              <h4>Writer</h4>
+              <div className="filter-group">
+                {[...(window.TEAM_MEMBERS || []).filter(m => m.role === 'resume_writer' && m.status === 'active').map(m => m.name), 'Unassigned'].map(w => (
+                  <label key={w} className="filter-chip"><span className="filter-chip-cb"></span><span>{w}</span></label>
+                ))}
+              </div>
+            </>
+          )}
         </FilterRail>
 
         <div className="table-wrap">

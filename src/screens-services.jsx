@@ -266,8 +266,7 @@ function RRListScreen({ openOrder }) {
           <table className="tbl">
             <thead><tr>
               <th>Candidate</th><th>Purchased</th><th>Status</th>
-              <th>Writer</th><th>Score</th><th>Paid</th><th></th>
-            </tr></thead>
+              <th>Writer</th><th>Score</th><th>Paid</th>            </tr></thead>
             <tbody>
               {filtered.map(o => (
                 <tr key={o.id} onClick={() => openOrder && openOrder(o.id)} style={{ cursor: 'pointer' }}>
@@ -277,7 +276,6 @@ function RRListScreen({ openOrder }) {
                   <td className="muted text-sm">{o.writer}</td>
                   <td>{o.originalResume ? <ScoreBadge value={o.score} /> : <span className="text-xs text-muted">—</span>}</td>
                   <td><Currency value={o.amountPaid} /></td>
-                  <td><button className="row-actions" onClick={e => e.stopPropagation()}><Icon name="more" /></button></td>
                 </tr>
               ))}
             </tbody>
@@ -715,8 +713,7 @@ function RBListScreen({ openSession }) {
                     <td><ScoreBadge value={g.latest.latestScore} live={g.latest.live} /></td>
                     <td><Currency value={g.totalPaid} /></td>
                     <td className="muted">{fmtDate(g.latest.lastActive)}</td>
-                    <td><button className="row-actions" onClick={e => e.stopPropagation()}><Icon name="more" /></button></td>
-                  </tr>
+                    </tr>
                 ))}
               </tbody>
             </table>
@@ -724,8 +721,7 @@ function RBListScreen({ openSession }) {
             <table className="tbl">
               <thead><tr>
                 <th>Session</th><th>Candidate</th><th>Started</th><th>Last activity</th>
-                <th>Current stage</th><th>Furthest stage</th><th>Status</th><th>Score</th><th>Δ</th><th>Paid</th><th>Coupon</th><th></th>
-              </tr></thead>
+                <th>Current stage</th><th>Furthest stage</th><th>Status</th><th>Score</th><th>Δ</th><th>Paid</th><th>Coupon</th>              </tr></thead>
               <tbody>
                 {sessions.map(s => (
                   <tr key={s.id} onClick={() => openSession && openSession(s.id)} style={{ cursor: 'pointer' }}>
@@ -740,8 +736,7 @@ function RBListScreen({ openSession }) {
                     <td>{s.scoreDelta != null ? <span style={{ fontWeight: 600, fontSize: 12, color: s.scoreDelta > 0 ? 'var(--green-strong)' : s.scoreDelta < 0 ? 'var(--red-strong)' : 'var(--fg-3)' }}>{s.scoreDelta > 0 ? '+' : ''}{s.scoreDelta}</span> : <span className="text-xs text-muted">—</span>}</td>
                     <td><Currency value={s.amountPaid} /></td>
                     <td><CouponCell code={s.coupon} /></td>
-                    <td><button className="row-actions" onClick={e => e.stopPropagation()}><Icon name="more" /></button></td>
-                  </tr>
+                    </tr>
                 ))}
               </tbody>
             </table>
@@ -941,7 +936,6 @@ function LOListScreen({ openSession }) {
                   <td><Pill tone={s.status === 'paid' ? 'violet' : s.status === 'progress' ? 'blue' : s.status === 'dropped' ? 'amber' : 'green'} dot>{s.status[0].toUpperCase()+s.status.slice(1)}</Pill></td>
                   <td><ScoreBadge value={s.score} /></td>
                   <td><Currency value={s.amountPaid} /></td>
-                  <td><button className="row-actions" onClick={e => e.stopPropagation()}><Icon name="more" /></button></td>
                 </tr>
               ))}
             </tbody>
@@ -1108,7 +1102,6 @@ function IIQListScreen({ openSession }) {
                   <td>{s.interviewScore != null ? <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: s.interviewScore >= 70 ? 'var(--green-strong)' : s.interviewScore >= 50 ? 'var(--amber-strong)' : 'var(--red-strong)' }}>{s.interviewScore}<span style={{ color: 'var(--fg-3)', fontSize: 11, fontWeight: 400 }}>/100</span></span> : <span className="text-xs text-muted">—</span>}</td>
                   <td className="muted">{fmtDate(s.started)}</td>
                   <td>{s.plan === 'free' ? <span className="text-xs text-muted">Free</span> : <Currency value={s.amountPaid} />}</td>
-                  <td><button className="row-actions" onClick={e => e.stopPropagation()}><Icon name="more" /></button></td>
                 </tr>
               ))}
             </tbody>
@@ -1307,7 +1300,6 @@ function RCListScreen({ openOrder }) {
                   <td className="tnum text-sm">{o.daysSincePayment}d</td>
                   <td><Currency value={o.amountPaid} /></td>
                   <td><CouponCell code={o.coupon} /></td>
-                  <td><button className="row-actions" onClick={e => e.stopPropagation()}><Icon name="more" /></button></td>
                 </tr>
               ))}
             </tbody>
@@ -1505,8 +1497,7 @@ function MRRListScreen({ openOrder }) {
           <table className="tbl">
             <thead><tr>
               <th>Candidate</th><th>Purchased</th><th>Status</th>
-              <th>Writer</th><th>Score (before)</th><th>Score (after)</th><th>Paid</th><th></th>
-            </tr></thead>
+              <th>Writer</th><th>Score (before)</th><th>Score (after)</th><th>Paid</th>            </tr></thead>
             <tbody>
               {filtered.map(o => (
                 <tr key={o.id} onClick={() => openOrder && openOrder(o.id)} style={{ cursor: 'pointer' }}>
@@ -1517,7 +1508,6 @@ function MRRListScreen({ openOrder }) {
                   <td>{o.originalResume ? <ScoreBadge value={o.originalScore} /> : <span className="text-xs text-muted">—</span>}</td>
                   <td>{o.rewrittenScore ? <ScoreBadge value={o.rewrittenScore} /> : <span className="text-xs text-muted">—</span>}</td>
                   <td><Currency value={o.amountPaid} /></td>
-                  <td><button className="row-actions" onClick={e => e.stopPropagation()}><Icon name="more" /></button></td>
                 </tr>
               ))}
             </tbody>

@@ -265,20 +265,19 @@ function RRListScreen({ openOrder }) {
           </div>
           <table className="tbl">
             <thead><tr>
-              <th>Order</th><th>Candidate</th><th>Status</th>
-              <th>Writer</th><th>SLA</th><th>Score</th><th>Paid</th><th>Coupon</th><th></th>
+              <th>Order</th><th>Candidate</th><th>Purchased</th><th>Status</th>
+              <th>Writer</th><th>SLA</th><th>Paid</th><th></th>
             </tr></thead>
             <tbody>
               {filtered.map(o => (
                 <tr key={o.id} onClick={() => openOrder && openOrder(o.id)} style={{ cursor: 'pointer' }}>
                   <td className="tnum text-muted">{o.id}</td>
                   <td><div className="av-row"><Avatar initials={o.candidate.avatarInitials} /><div><div className="n">{o.candidate.name}</div><div className="e">{o.candidate.email}</div></div></div></td>
+                  <td className="text-sm text-muted tnum">{fmtDateTime(o.placed)}</td>
                   <td><Pill tone={window.rrStateTone(o.state)} dot>{o.state}</Pill></td>
                   <td className="muted text-sm">{o.writer}</td>
                   <td><SlaBadge minutesLeft={o.slaRemainingMin} /></td>
-                  <td>{o.originalResume ? <ScoreBadge value={o.score} /> : <span className="text-xs text-muted">—</span>}</td>
                   <td><Currency value={o.amountPaid} /></td>
-                  <td><CouponCell code={o.coupon} /></td>
                   <td><button className="row-actions" onClick={e => e.stopPropagation()}><Icon name="more" /></button></td>
                 </tr>
               ))}
@@ -1506,20 +1505,18 @@ function MRRListScreen({ openOrder }) {
           </div>
           <table className="tbl">
             <thead><tr>
-              <th>Order</th><th>Candidate</th><th>Status</th>
-              <th>Writer</th><th>Score (before)</th><th>Score (after)</th><th>Paid</th><th>RR Discount</th><th></th>
+              <th>Order</th><th>Candidate</th><th>Purchased</th><th>Status</th>
+              <th>Writer</th><th>Paid</th><th></th>
             </tr></thead>
             <tbody>
               {filtered.map(o => (
                 <tr key={o.id} onClick={() => openOrder && openOrder(o.id)} style={{ cursor: 'pointer' }}>
                   <td className="tnum text-muted">{o.id}</td>
                   <td><div className="av-row"><Avatar initials={o.candidate.avatarInitials} /><div><div className="n">{o.candidate.name}</div><div className="e">{o.candidate.email}</div></div></div></td>
+                  <td className="text-sm text-muted tnum">{fmtDateTime(o.placed)}</td>
                   <td><Pill tone={window.mrrStateTone(o.state)} dot>{o.state}</Pill></td>
                   <td className="text-sm text-muted">{o.writer}</td>
-                  <td>{o.originalResume ? <ScoreBadge value={o.originalScore} /> : <span className="text-xs text-muted">—</span>}</td>
-                  <td>{o.rewrittenScore ? <ScoreBadge value={o.rewrittenScore} /> : <span className="text-xs text-muted">—</span>}</td>
                   <td><Currency value={o.amountPaid} /></td>
-                  <td>{o.rrDiscount > 0 ? <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--green-strong)', background: 'var(--green-soft)', padding: '2px 7px', borderRadius: 4 }}>-₹99</span> : <span className="text-xs text-muted">—</span>}</td>
                   <td><button className="row-actions" onClick={e => e.stopPropagation()}><Icon name="more" /></button></td>
                 </tr>
               ))}

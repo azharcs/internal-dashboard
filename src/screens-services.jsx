@@ -266,7 +266,8 @@ function RRListScreen({ openOrder }) {
           <table className="tbl">
             <thead><tr>
               <th>Candidate</th><th>Purchased</th><th>Status</th>
-              <th>Writer</th><th>Score</th><th>Paid</th>            </tr></thead>
+              <th>Writer</th><th>Score</th><th>Paid</th><th></th>
+            </tr></thead>
             <tbody>
               {filtered.map(o => (
                 <tr key={o.id} onClick={() => openOrder && openOrder(o.id)} style={{ cursor: 'pointer' }}>
@@ -276,6 +277,11 @@ function RRListScreen({ openOrder }) {
                   <td className="muted text-sm">{o.writer}</td>
                   <td>{o.originalResume ? <ScoreBadge value={o.score} /> : <span className="text-xs text-muted">—</span>}</td>
                   <td><Currency value={o.amountPaid} /></td>
+                  <td>{o.state === 'Delivered' && (
+                    <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); openReportEditor(o); }} style={{ whiteSpace: 'nowrap' }}>
+                      <Icon name="external" size={12} /> View report
+                    </button>
+                  )}</td>
                 </tr>
               ))}
             </tbody>

@@ -36383,7 +36383,7 @@ window.buildTimelineFor = buildTimelineFor;
 /* Extended data for service detail screens */
 
 const RR_STATES_ALL = ['New','In Review','Report Ready','Delivered','Cancelled'];
-const RC_STATES_ALL = ['New','Scheduled','Conducted','No-show','Report Ready','Delivered','Cancelled'];
+const RC_STATES_ALL = ['New','Scheduled','Delivered','Cancelled'];
 
 function _rand(seed) { let s = seed; return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; }; }
 
@@ -36502,27 +36502,33 @@ function buildIIQSessions() {
 
 function buildRCOrdersFull() {
   const r = _rand(91);
-  const recs = ['—','Anjali Verma','Rohit Singh','Maya Krishnan','Devika P.','Akash R.'];
-  const callStatuses = ['—','Awaiting','Confirmed','Conducted','Missed'];
-  const coupons = [null, null, null, 'GCC500'];
+  const writers = ['—','Aditi K.','Vivek M.','Sana R.'];
+  const roles = ['Senior Product Manager','Software Engineer (Backend)','Data Scientist','UX Designer','Frontend Engineer','Engineering Manager'];
+  const expLevels = ['Mid-level (3–5 yrs)','Senior (6–9 yrs)','Lead / Principal (10+ yrs)'];
   const list = [];
   for (let i = 0; i < 14; i++) {
     const cand = window.CANDIDATES[Math.floor(r() * window.CANDIDATES.length)];
-    const state = RC_STATES_ALL[Math.floor(r() * (RC_STATES_ALL.length - 1))];
+    const state = RC_STATES_ALL[Math.floor(r() * RC_STATES_ALL.length)];
     const placed = window.relDate(Math.floor(r() * 14), 9 + Math.floor(r()*8), Math.floor(r()*60));
-    const slot = state === 'New' ? null : window.relDate(-Math.floor(r() * 7) + Math.floor(r() * 5), 11 + Math.floor(r()*7), [0,15,30,45][Math.floor(r()*4)]);
-    const recruiter = state === 'New' ? '—' : recs[1 + Math.floor(r()*5)];
-    const callStatus = state === 'New' ? '—' : state === 'Scheduled' ? 'Confirmed' : state === 'Conducted' ? 'Conducted' : state === 'No-show' ? 'Missed' : ['Conducted','Confirmed'][Math.floor(r()*2)];
-    const coupon = coupons[Math.floor(r() * coupons.length)];
-    const daysSincePayment = Math.floor((Date.now() - placed) / 86400000);
+    const writer = ['New','Cancelled'].includes(state) ? '—' : writers[1 + Math.floor(r()*3)];
+    const infoFilled = state !== 'New' || r() < 0.5;
+    const targetRole = infoFilled ? roles[Math.floor(r() * roles.length)] : null;
+    const experienceLevel = infoFilled ? expLevels[Math.floor(r() * expLevels.length)] : null;
+    const hasResume = infoFilled;
+    const resume = hasResume ? { name: `${cand.name.split(' ')[0]}_Resume.pdf`, uploadedAt: placed } : null;
+    const jobLinks = infoFilled && r() > 0.4 ? 'https://linkedin.com/jobs/view/123456\nhttps://internshala.com/job/456789' : null;
+    const availability = infoFilled && r() > 0.5 ? 'Weekdays 6–8 PM IST, Weekends anytime' : null;
+    const hasReport = state === 'Delivered';
+    const callReport = hasReport ? { name: 'PostCall_Report.pdf', uploadedAt: window.relDate(Math.floor(r()*3), 14, 0) } : null;
     list.push({
       id: 'RC-' + (3200 + i),
-      candidate: cand, state, recruiter, slot, callStatus,
-      daysSincePayment, amountPaid: coupon === 'GCC500' ? 999 : 1499, coupon,
-      score: cand.score, placed,
+      candidate: cand, state, writer, placed,
+      amountPaid: 1499,
+      score: cand.score,
+      targetRole, experienceLevel, resume, jobLinks, availability, callReport,
     });
   }
-  list.sort((a, b) => (a.slot || 0) - (b.slot || 0));
+  list.sort((a, b) => a.placed - b.placed);
   return list;
 }
 

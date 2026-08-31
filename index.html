@@ -36613,10 +36613,7 @@ window.RR_TRANSITIONS = {
 };
 window.RC_TRANSITIONS = {
   'New': ['Scheduled','Cancelled'],
-  'Scheduled': ['Conducted','No-show'],
-  'Conducted': ['Report Ready'],
-  'No-show': ['Scheduled','Cancelled'],
-  'Report Ready': ['Delivered'],
+  'Scheduled': ['Delivered','Cancelled'],
   'Delivered': [],
   'Cancelled': [],
 };
@@ -36658,10 +36655,10 @@ const ROLES = {
   },
   resume_writer: {
     label: 'Resume Writer',
-    description: 'RR + MRR — sees only orders assigned to them',
+    description: 'RR · MRR · RC — sees only orders assigned to them',
     color: 'var(--blue-strong)',
     bg: 'var(--blue-soft)',
-    services: ['RR','MRR'],
+    services: ['RR','MRR','RC'],
     scope: 'assigned',
     canManageUsers: false,
     canManageRoles: false,
@@ -37057,7 +37054,7 @@ function MemberDetailPanel({ member, members, setMembers, onClose }) {
             <span className="text-xs font-semi" style={{ color: 'var(--fg-2)' }}>
               {ROLES[editRole].scope === 'all'
                 ? 'Sees all orders across all services'
-                : 'Sees only orders assigned to them in RR + MRR'}
+                : 'Sees only orders assigned to them in RR, MRR & RC'}
             </span>
           </div>
           <div className="text-xs text-muted">
@@ -40813,64 +40810,63 @@ function IIQDetailScreen({ sessionId, goBack }) {
 
 function RCListScreen({ openOrder }) {
   const [stateFilter, setStateFilter] = React.useState([]);
-  let orders = window.RC_ORDERS_FULL;
+  const [writerFilter, setWriterFilter] = React.useState([]);
+  const allOrders = window.RC_ORDERS_FULL;
+  let orders = window.ACCESS.isRestricted() ? window.ACCESS.filterOrders(allOrders, 'writer') : allOrders;
   if (stateFilter.length) orders = orders.filter(o => stateFilter.includes(o.state));
+  if (writerFilter.length) orders = orders.filter(o => writerFilter.includes(o.writer));
+
+  const writerNames = [...new Set(allOrders.map(o => o.writer).filter(w => w !== '—'))].sort();
   const counts = {};
-  window.RC_STATES_ALL.forEach(s => counts[s] = window.RC_ORDERS_FULL.filter(o => o.state === s).length);
+  window.RC_STATES_ALL.forEach(s => counts[s] = allOrders.filter(o => o.state === s).length);
 
   return (
     <div className="page">
-      <ServicePageHead code="RC" title="Recruiter Connect" sub="Manual delivery · ₹1,499 · 30-min recruiter call + post-call report"
+      <ServicePageHead code="RC" title="Recruiter Connect" sub="Manual delivery · ₹1,499 · 30-min call + post-call report"
         actions={<button className="btn btn-primary"><Icon name="download" /> Download CSV</button>} />
 
-      <div style={{ background: 'var(--primary-50)', padding: '10px 16px', borderRadius: 6, marginBottom: 16, fontSize: 13, color: 'var(--primary-800)', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <Icon name="info" size={14} style={{ stroke: 'var(--primary)' }} />
-        <span>v1: manual assignment only. No recruiter availability calendar — assign from the row action menu.</span>
-      </div>
-
-      <div className="kpi-row mb-4">
-        <KpiTile label="Awaiting schedule" value={orders.filter(o => o.state === 'New').length} sub="needs assignment" tone="amber" />
-        <KpiTile label="Calls this week" value={orders.filter(o => o.state === 'Scheduled').length} sub="confirmed" />
-        <KpiTile label="Reports pending" value={orders.filter(o => o.state === 'Conducted').length} sub="post-call" />
-        <KpiTile label="Report ready" value={orders.filter(o => o.state === 'Report Ready').length} sub="ready to deliver" tone="green" />
+      <div className="kpi-row mb-4" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
+        <KpiTile label="New" value={allOrders.filter(o => o.state === 'New').length} sub="awaiting assignment" tone="amber" />
+        <KpiTile label="Scheduled" value={allOrders.filter(o => o.state === 'Scheduled').length} sub="call booked" tone="blue" />
+        <KpiTile label="Delivered" value={allOrders.filter(o => o.state === 'Delivered').length} sub="report sent" tone="green" />
+        <KpiTile label="Cancelled" value={allOrders.filter(o => o.state === 'Cancelled').length} sub="" />
       </div>
 
       <div className="list-layout">
-        <FilterRail onClear={() => setStateFilter([])}>
+        <FilterRail onClear={() => { setStateFilter([]); setWriterFilter([]); }}>
           <FilterGroup title="Status" options={window.RC_STATES_ALL} selected={stateFilter} onToggle={v => setStateFilter(s => s.includes(v) ? s.filter(x => x !== v) : [...s, v])} counts={counts} />
-          <h4>Recruiter</h4>
-          <div className="filter-group">
-            {['Anjali Verma','Rohit Singh','Maya Krishnan','Devika P.','Akash R.','Unassigned'].map(o => <label key={o} className="filter-chip"><span className="filter-chip-cb"></span><span>{o}</span></label>)}
-          </div>
-          <h4>Call status</h4>
-          <div className="filter-group">
-            {['Awaiting','Proposed','Confirmed','Conducted','Missed'].map(o => <label key={o} className="filter-chip"><span className="filter-chip-cb"></span><span>{o}</span></label>)}
-          </div>
-          <h4>Days since payment</h4>
-          <div style={{ padding: 6 }}><div className="text-xs text-muted">0 – 30 days</div></div>
+          {!window.ACCESS.isRestricted() && (<>
+            <h4>Writer</h4>
+            <div className="filter-group">
+              {['Unassigned', ...writerNames].map(o => (
+                <label key={o} className="filter-chip">
+                  <input type="checkbox" style={{ display:'none' }} checked={writerFilter.includes(o === 'Unassigned' ? '—' : o)} onChange={() => {
+                    const v = o === 'Unassigned' ? '—' : o;
+                    setWriterFilter(s => s.includes(v) ? s.filter(x => x !== v) : [...s, v]);
+                  }} />
+                  <span className="filter-chip-cb"></span><span>{o}</span>
+                </label>
+              ))}
+            </div>
+          </>)}
         </FilterRail>
 
         <div className="table-wrap">
           <div className="table-toolbar">
-            <div className="left">
-
-              <span className="text-xs text-muted">{orders.length} orders</span>
-            </div>
+            <div className="left"><span className="text-xs text-muted">{orders.length} orders</span></div>
           </div>
           <table className="tbl">
-            <thead><tr><th>Order</th><th>Candidate</th><th>Status</th><th>Recruiter</th><th>Slot</th><th>Call</th><th>Days since pay</th><th>Paid</th><th>Coupon</th><th></th></tr></thead>
+            <thead><tr>
+              <th>Candidate</th><th>Purchased</th><th>Status</th><th>Writer</th><th>Paid</th>
+            </tr></thead>
             <tbody>
               {orders.map(o => (
                 <tr key={o.id} onClick={() => openOrder && openOrder(o.id)} style={{ cursor: 'pointer' }}>
-                  <td className="tnum text-muted">{o.id}</td>
-                  <td><div className="av-row"><Avatar initials={o.candidate.avatarInitials} /><div className="n">{o.candidate.name}</div></div></td>
+                  <td><div className="av-row"><Avatar initials={o.candidate.avatarInitials} /><div><div className="n">{o.candidate.name}</div><div className="e">{o.candidate.email}</div></div></div></td>
+                  <td className="tnum text-sm text-muted">{fmtDateTime(o.placed)}</td>
                   <td><Pill tone={window.rcStateTone(o.state)} dot>{o.state}</Pill></td>
-                  <td className="muted text-sm">{o.recruiter}</td>
-                  <td className="muted text-sm">{o.slot ? fmtDateTime(o.slot) + ' IST' : '—'}</td>
-                  <td><span className="text-xs cap" style={{ color: 'var(--fg-2)' }}>{o.callStatus}</span></td>
-                  <td className="tnum text-sm">{o.daysSincePayment}d</td>
+                  <td className="text-sm text-muted">{o.writer}</td>
                   <td><Currency value={o.amountPaid} /></td>
-                  <td><CouponCell code={o.coupon} /></td>
                 </tr>
               ))}
             </tbody>
@@ -40884,17 +40880,40 @@ function RCListScreen({ openOrder }) {
 function RCDetailScreen({ orderId, goBack }) {
   const order = window.RC_ORDERS_FULL.find(o => o.id === orderId) || window.RC_ORDERS_FULL[0];
   const [currentState, setCurrentState] = React.useState(order.state);
-  const slotPassed = order.slot && order.slot < new Date();
-
-  const scheduleHistory = order.slot ? [
-    { actor: 'Anjali Verma', action: 'proposed slot', when: relDate(order.daysSincePayment - 1, 12, 0) },
-    { actor: 'Candidate', action: 'confirmed slot', when: relDate(order.daysSincePayment - 1, 14, 22) },
-  ] : [];
+  const [assignedWriter, setAssignedWriter] = React.useState(order.writer);
+  const [targetRole, setTargetRole] = React.useState(order.targetRole);
+  const [expLevel, setExpLevel] = React.useState(order.experienceLevel);
+  const [resume, setResume] = React.useState(order.resume);
+  const [jobLinks, setJobLinks] = React.useState(order.jobLinks);
+  const [availability, setAvailability] = React.useState(order.availability);
+  const [callReport, setCallReport] = React.useState(order.callReport);
+  const [editingInfo, setEditingInfo] = React.useState(false);
+  const [editTargetRole, setEditTargetRole] = React.useState(order.targetRole || '');
+  const [editExpLevel, setEditExpLevel] = React.useState(order.experienceLevel || '');
+  const [editJobLinks, setEditJobLinks] = React.useState(order.jobLinks || '');
+  const [editAvailability, setEditAvailability] = React.useState(order.availability || '');
 
   const history = [
     { actor: 'System', action: 'order created', when: order.placed },
-    ...(order.recruiter !== '—' ? [{ actor: 'Sushant V.', action: `assigned recruiter ${order.recruiter}`, when: relDate(order.daysSincePayment, 9, 30), reason: 'Domain match' }] : []),
+    ...(order.writer !== '—' ? [{ actor: 'Ops', action: `assigned writer ${order.writer}`, when: relDate(0, 10, 5) }] : []),
   ];
+
+  const rcRequirements = currentState === 'New' ? [
+    { label: 'Target role filled', met: !!targetRole },
+    { label: 'Experience level filled', met: !!expLevel },
+    { label: 'Resume uploaded', met: !!resume },
+  ] : currentState === 'Scheduled' ? [
+    { label: 'Post-call report uploaded', met: !!callReport },
+  ] : null;
+
+  const rcBlockedTransitions = {};
+  if (currentState === 'New' && rcRequirements) {
+    const unmet = rcRequirements.filter(r => !r.met);
+    if (unmet.length > 0) rcBlockedTransitions['Scheduled'] = unmet.map(r => r.label).join(' · ') + ' required';
+  }
+  if (currentState === 'Scheduled' && !callReport) {
+    rcBlockedTransitions['Delivered'] = 'Upload post-call report first';
+  }
 
   return (
     <div className="page">
@@ -40905,106 +40924,130 @@ function RCDetailScreen({ orderId, goBack }) {
 
       <div className="page-head">
         <div>
-          <div className="flex items-center gap-3"><h1>{order.id}</h1><Pill tone={window.rcStateTone(order.state)} dot>{order.state}</Pill></div>
+          <div className="flex items-center gap-3"><h1>{order.id}</h1><Pill tone={window.rcStateTone(currentState)} dot>{currentState}</Pill></div>
           <p>Recruiter Connect · placed {fmtDateTime(order.placed)}</p>
         </div>
       </div>
 
       <div style={{ display: 'flex', gap: 20 }}>
         <ContextRail candidate={order.candidate} score={order.score}
-          payment={{ amount: order.amountPaid, coupon: order.coupon, when: order.placed }}
-          sections={
-            <div className="cand-rail-section" style={{ borderTop: '1px solid var(--border-1)' }}>
-              <div className="text-xs cap mb-2" style={{ color: 'var(--fg-3)' }}>Days since payment</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 28, color: order.daysSincePayment > 7 ? 'var(--amber-strong)' : 'var(--fg-1)', lineHeight: 1 }}>{order.daysSincePayment}<span style={{ fontSize: 14, color: 'var(--fg-3)', fontWeight: 500 }}>d</span></div>
-            </div>
-          }
-        />
+          payment={{ amount: order.amountPaid, when: order.placed }} />
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <StatusTransitionPanel currentState={currentState} transitions={window.RC_TRANSITIONS} tone={window.rcStateTone} history={history} onTransition={setCurrentState} />
+          <StatusTransitionPanel currentState={currentState} transitions={window.RC_TRANSITIONS}
+            tone={window.rcStateTone} history={history} onTransition={setCurrentState}
+            requirements={rcRequirements} blockedTransitions={rcBlockedTransitions}
+            writerNode={!window.ACCESS.isRestricted() && <window.WriterPickerBtn value={assignedWriter} onChange={setAssignedWriter} />} />
 
-          {/* Scheduling panel */}
+          {/* Candidate info card */}
           <div className="card mb-4">
-            <div className="card-head"><h3 className="card-title">Scheduling</h3>
-              <button className="btn btn-secondary btn-sm"><Icon name="refresh" size={12} /> Reschedule</button>
-            </div>
-            <div style={{ padding: 20 }}>
-              {order.slot ? (
-                <div className="flex items-start gap-3" style={{ padding: 14, background: 'var(--bg-alt)', borderRadius: 8, marginBottom: 14 }}>
-                  <Icon name="clock" size={16} style={{ stroke: 'var(--primary)' }} />
-                  <div style={{ flex: 1 }}>
-                    <div className="font-semi text-sm">{fmtDateTime(order.slot)} IST</div>
-                    <div className="text-xs text-muted">30 min · with {order.recruiter}</div>
+            <div className="card-head">
+              <h3 className="card-title">Candidate info</h3>
+              {!editingInfo
+                ? <button className="btn btn-secondary btn-sm" onClick={() => setEditingInfo(true)}><Icon name="edit" size={12} /> Edit</button>
+                : <div className="flex gap-2">
+                    <button className="btn btn-ghost btn-sm" onClick={() => setEditingInfo(false)}>Cancel</button>
+                    <button className="btn btn-primary btn-sm" onClick={() => {
+                      setTargetRole(editTargetRole || null);
+                      setExpLevel(editExpLevel || null);
+                      setJobLinks(editJobLinks || null);
+                      setAvailability(editAvailability || null);
+                      setEditingInfo(false);
+                    }}>Save</button>
                   </div>
-                  <Pill tone={slotPassed ? 'grey' : 'green'} dot>{slotPassed ? 'Passed' : 'Confirmed'}</Pill>
-                </div>
-              ) : (
-                <div className="text-sm text-muted" style={{ marginBottom: 14 }}>No slot proposed yet.</div>
-              )}
-              {scheduleHistory.length > 0 && (
-                <>
-                  <div className="text-xs cap mb-2" style={{ color: 'var(--fg-3)' }}>Schedule history</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {scheduleHistory.map((h, i) => (
-                      <div key={i} className="flex items-center gap-3 text-sm" style={{ padding: '6px 0' }}>
-                        <span className="font-semi">{h.actor}</span>
-                        <span className="text-muted">{h.action}</span>
-                        <span className="text-xs text-muted" style={{ marginLeft: 'auto' }}>{fmtDateTime(h.when)}</span>
+              }
+            </div>
+            <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <div className="text-xs cap mb-1" style={{ color: 'var(--fg-3)' }}>Target role</div>
+                {editingInfo
+                  ? <input className="t500-input" value={editTargetRole} onChange={e => setEditTargetRole(e.target.value)} placeholder="e.g. Senior Product Manager" style={{ width: '100%', padding: '8px 10px' }} />
+                  : <div className="text-sm" style={{ color: targetRole ? 'var(--fg-1)' : 'var(--fg-4)' }}>{targetRole || 'Not provided'}</div>
+                }
+              </div>
+              <div>
+                <div className="text-xs cap mb-1" style={{ color: 'var(--fg-3)' }}>Experience level</div>
+                {editingInfo
+                  ? <select className="t500-input" value={editExpLevel} onChange={e => setEditExpLevel(e.target.value)} style={{ width: '100%', padding: '8px 10px' }}>
+                      <option value="">Select level</option>
+                      {['Mid-level (3–5 yrs)','Senior (6–9 yrs)','Lead / Principal (10+ yrs)'].map(l => <option key={l} value={l}>{l}</option>)}
+                    </select>
+                  : <div className="text-sm" style={{ color: expLevel ? 'var(--fg-1)' : 'var(--fg-4)' }}>{expLevel || 'Not provided'}</div>
+                }
+              </div>
+              <div>
+                <div className="text-xs cap mb-1" style={{ color: 'var(--fg-3)' }}>Resume</div>
+                {resume
+                  ? <div className="flex items-center gap-2" style={{ padding: '8px 10px', background: 'var(--bg-alt)', borderRadius: 6 }}>
+                      <Icon name="file" size={14} style={{ stroke: 'var(--fg-3)' }} />
+                      <span className="text-sm font-semi" style={{ flex: 1 }}>{resume.name}</span>
+                      <span className="text-xs text-muted">Uploaded {fmtDateTime(resume.uploadedAt)}</span>
+                      <label className="btn btn-ghost btn-sm" style={{ cursor: 'pointer' }}>Replace<input type="file" accept=".pdf" style={{ display:'none' }} onChange={e => { const f=e.target.files[0]; if(f) setResume({name:f.name,uploadedAt:new Date()}); }} /></label>
+                    </div>
+                  : <div style={{ border: '1.5px dashed var(--border-2)', borderRadius: 6, padding: '12px 14px', textAlign: 'center' }}>
+                      <div className="text-sm text-muted mb-2">No resume uploaded</div>
+                      <label className="btn btn-secondary btn-sm" style={{ cursor: 'pointer' }}><Icon name="upload" size={12} /> Upload PDF<input type="file" accept=".pdf" style={{ display:'none' }} onChange={e => { const f=e.target.files[0]; if(f) setResume({name:f.name,uploadedAt:new Date()}); }} /></label>
+                    </div>
+                }
+              </div>
+              <div>
+                <div className="text-xs cap mb-1" style={{ color: 'var(--fg-3)' }}>Job links</div>
+                {editingInfo
+                  ? <textarea className="t500-input" value={editJobLinks} onChange={e => setEditJobLinks(e.target.value)} placeholder="One link per line…" rows={3} style={{ width: '100%', padding: '8px 10px', resize: 'vertical' }} />
+                  : jobLinks
+                    ? <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {jobLinks.split('\n').map((l,i) => l.trim() && <a key={i} href={l.trim()} target="_blank" rel="noopener noreferrer" className="text-sm" style={{ color:'var(--primary)', wordBreak:'break-all' }}>{l.trim()}</a>)}
                       </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Call panel */}
-          <div className="card mb-4">
-            <div className="card-head"><h3 className="card-title">Call</h3>
-              <div className="flex gap-2">
-                <button className="btn btn-secondary btn-sm" disabled={!slotPassed || order.state !== 'Scheduled'}><Icon name="check" size={12} /> Mark conducted</button>
-                <button className="btn btn-secondary btn-sm" disabled={!slotPassed || order.state !== 'Scheduled'}><Icon name="x" size={12} /> Mark no-show</button>
+                    : <div className="text-sm" style={{ color: 'var(--fg-4)' }}>Not provided</div>
+                }
+              </div>
+              <div>
+                <div className="text-xs cap mb-1" style={{ color: 'var(--fg-3)' }}>Availability</div>
+                {editingInfo
+                  ? <input className="t500-input" value={editAvailability} onChange={e => setEditAvailability(e.target.value)} placeholder="e.g. Weekdays 6–8 PM IST" style={{ width: '100%', padding: '8px 10px' }} />
+                  : <div className="text-sm" style={{ color: availability ? 'var(--fg-1)' : 'var(--fg-4)' }}>{availability || 'Not provided'}</div>
+                }
               </div>
             </div>
-            <div style={{ padding: 20 }}>
-              {!slotPassed && order.state === 'Scheduled' && <div className="text-sm text-muted" style={{ marginBottom: 14 }}>Mark actions enable after the slot has passed.</div>}
-              {['Conducted','Report Ready','Delivered'].includes(order.state) && (
-                <>
-                  <div className="text-xs cap mb-2" style={{ color: 'var(--fg-3)' }}>Recruiter summary</div>
-                  <div style={{ background: 'var(--bg-alt)', padding: 14, borderRadius: 8, marginBottom: 14 }}>
-                    <p className="text-sm" style={{ color: 'var(--fg-2)', lineHeight: 1.6 }}>Solid 30-min conversation. {order.candidate.name.split(' ')[0]} is open to mid-2026 senior IC roles in Bengaluru/Hyderabad GCCs. Strong fundamentals, good comm, expecting 35-40 LPA. Notice period: 60 days. Recommend introducing to GCC product roles in the queue.</p>
-                  </div>
-                </>
-              )}
-              <div className="text-xs cap mb-2" style={{ color: 'var(--fg-3)' }}>Post-call notes</div>
-              <textarea className="t500-input" placeholder="Add internal notes about this call…" style={{ width: '100%', minHeight: 60, padding: 10, resize: 'vertical' }}></textarea>
-            </div>
           </div>
 
-          {/* Report panel */}
-          {['Report Ready','Delivered'].includes(order.state) && (
+          {/* Post-call report card */}
+          {['Scheduled','Delivered'].includes(currentState) && (
             <div className="card mb-4">
-              <div className="card-head"><h3 className="card-title">Report</h3><span className="text-xs text-muted">2 versions</span></div>
-              <div style={{ padding: 8 }}>
-                {[{ v: 'v2', uploader: order.recruiter, when: relDate(0, 14, 30), note: 'Polished tone in recommendation block', isFinal: order.state === 'Delivered' },
-                  { v: 'v1', uploader: order.recruiter, when: relDate(1, 11, 0) }].map((v, i) => (
-                  <div key={i} className="flex items-center gap-3" style={{ padding: '12px 14px', borderBottom: i === 0 ? '1px solid var(--border-1)' : 'none' }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--primary-800)', background: 'var(--primary-50)', padding: '3px 8px', borderRadius: 4 }}>{v.v}</span>
-                    <div style={{ flex: 1 }}><div className="font-semi text-sm">Uploaded by {v.uploader}</div>{v.note && <div className="text-xs text-muted">{v.note}</div>}</div>
-                    <span className="text-xs text-muted">{fmtDateTime(v.when)}</span>
-                    {v.isFinal ? <Pill tone="green" dot>Final</Pill> : <button className="btn btn-ghost btn-sm">Mark as final</button>}
+              <div className="card-head">
+                <h3 className="card-title">Post-call report</h3>
+                {!callReport && currentState === 'Scheduled' && (
+                  <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--amber-strong)', background: 'var(--amber-soft)', padding: '2px 8px', borderRadius: 4 }}>Required to deliver</span>
+                )}
+              </div>
+              <div style={{ padding: 20 }}>
+                {callReport ? (
+                  <div className="flex items-center gap-3" style={{ padding: '12px 14px', background: 'var(--bg-alt)', borderRadius: 8 }}>
+                    <Icon name="file" size={18} style={{ stroke: 'var(--green-strong)' }} />
+                    <div style={{ flex: 1 }}>
+                      <div className="font-semi text-sm">{callReport.name}</div>
+                      <div className="text-xs text-muted">Uploaded {fmtDateTime(callReport.uploadedAt)}</div>
+                    </div>
+                    <Pill tone="green" dot>Uploaded</Pill>
+                    <label className="btn btn-ghost btn-sm" style={{ cursor: 'pointer' }}>Replace<input type="file" accept=".pdf" style={{ display:'none' }} onChange={e => { const f=e.target.files[0]; if(f) setCallReport({name:f.name,uploadedAt:new Date()}); }} /></label>
                   </div>
-                ))}
+                ) : (
+                  <div style={{ border: '1.5px dashed var(--border-2)', borderRadius: 8, padding: '24px 16px', textAlign: 'center' }}>
+                    <Icon name="upload" size={24} style={{ stroke: 'var(--fg-3)', marginBottom: 8, display: 'block', margin: '0 auto 8px' }} />
+                    <div className="text-sm font-semi mb-1">Upload post-call report</div>
+                    <div className="text-xs text-muted mb-3">PDF only · Max 10 MB</div>
+                    <label className="btn btn-primary btn-sm" style={{ cursor: 'pointer' }}><Icon name="upload" size={12} /> Choose PDF<input type="file" accept=".pdf" style={{ display:'none' }} onChange={e => { const f=e.target.files[0]; if(f) setCallReport({name:f.name,uploadedAt:new Date()}); }} /></label>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
           <NotesPanel />
           <ActivityLogPanel events={[
-            { icon: 'card', tone: 'violet', when: order.placed, text: 'Order placed', meta: [fmtINR(order.amountPaid), order.coupon ? `Coupon ${order.coupon}` : null].filter(Boolean) },
-            ...(order.recruiter !== '—' ? [{ icon: 'user', tone: 'green', when: relDate(order.daysSincePayment, 10, 0), text: `Recruiter assigned: ${order.recruiter}`, meta: [] }] : []),
-            ...(order.slot ? [{ icon: 'clock', tone: 'blue', when: relDate(order.daysSincePayment - 1, 14, 22), text: `Slot confirmed: ${fmtDateTime(order.slot)}`, meta: [] }] : []),
+            { icon: 'card', tone: 'violet', when: order.placed, text: 'Order placed', meta: [fmtINR(order.amountPaid)].filter(Boolean) },
+            ...(order.writer !== '—' ? [{ icon: 'user', tone: 'green', when: relDate(0, 10, 0), text: `Writer assigned: ${order.writer}`, meta: [] }] : []),
+            ...(order.callReport ? [{ icon: 'file', tone: 'blue', when: order.callReport.uploadedAt, text: 'Post-call report uploaded', meta: [] }] : []),
             { icon: 'pulse', tone: 'blue', when: relDate(0, 12, 0), text: 'Status: ' + order.state, meta: [] },
           ]} />
         </div>

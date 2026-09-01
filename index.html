@@ -41049,7 +41049,6 @@ function RCDetailScreen({ orderId, goBack }) {
             </div>
           )}
 
-          <NotesPanel />
           <ActivityLogPanel events={[
             { icon: 'card', tone: 'violet', when: order.placed, text: 'Order placed', meta: [fmtINR(order.amountPaid)].filter(Boolean) },
             ...(order.writer !== '—' ? [{ icon: 'user', tone: 'green', when: relDate(0, 10, 0), text: `Writer assigned: ${order.writer}`, meta: [] }] : []),

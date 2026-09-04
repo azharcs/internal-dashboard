@@ -36505,10 +36505,12 @@ function buildRCOrdersFull() {
   const writers = ['—','Aditi K.','Vivek M.','Sana R.'];
   const roles = ['Senior Product Manager','Software Engineer (Backend)','Data Scientist','UX Designer','Frontend Engineer','Engineering Manager'];
   const expLevels = ['Mid-level (3–5 yrs)','Senior (6–9 yrs)','Lead / Principal (10+ yrs)'];
+  // Weighted pool: New×5, Scheduled×4, Delivered×4, Cancelled×1
+  const statePool = ['New','New','New','New','New','Scheduled','Scheduled','Scheduled','Scheduled','Delivered','Delivered','Delivered','Delivered','Cancelled'];
   const list = [];
   for (let i = 0; i < 14; i++) {
     const cand = window.CANDIDATES[Math.floor(r() * window.CANDIDATES.length)];
-    const state = RC_STATES_ALL[Math.floor(r() * RC_STATES_ALL.length)];
+    const state = statePool[i];
     const placed = window.relDate(Math.floor(r() * 14), 9 + Math.floor(r()*8), Math.floor(r()*60));
     const writer = ['New','Cancelled'].includes(state) ? '—' : writers[1 + Math.floor(r()*3)];
     const infoFilled = state !== 'New' || r() < 0.5;
